@@ -2,6 +2,8 @@
 
 A home-screen widget for recording today's metrics — local-first, tap-only, open source. **A tracker, not a to-do list:** each item is a measurement you log with a tap, not a task waiting to be completed. The long-term goal is to keep every recorded value in a git repository you own.
 
+Source: [github.com/JustZambetti/habitcommit](https://github.com/JustZambetti/habitcommit).
+
 > **Status: early smoke prototype.** Logging works fully offline; GitHub sync is optional and experimental. No account, no telemetry. The PAT is stored only on the phone, encrypted with the Android Keystore.
 
 ## What it does today
@@ -11,7 +13,8 @@ A home-screen widget for recording today's metrics — local-first, tap-only, op
 - **Ratings, not just yes/no.** A metric can be `"type": "rating"` with a `max` (default 5): the widget shows one tappable star per point, so "Focus 3/5" takes one tap. Ratings are stored as numbers in the same journal; any value above zero counts as recorded.
 - **A different plan every day.** `habits.json` defines metrics, named plans and a weekly schedule; date overrides swap a plan or add/remove single metrics. The widget resolves *today's* plan at render time.
 - **Streak + 14-day heatmap** so progress is visible without opening the app.
-- **Material 3 visual language** in the app and the widget: pill-shaped filled/tonal buttons, standard 18dp checkboxes (outlined when empty, filled when done) and 8dp chips, drawn on Glance with the same palette.
+- **Material 3 visual language** in the app and the widget: pill-shaped filled/tonal buttons, standard 18dp checkboxes (outlined when empty, filled when done) and 8dp chips, drawn with native `RemoteViews` from the same palette.
+- **Taps repaint in place.** A widget tap is handled by a plain `BroadcastReceiver` that writes the journal and applies the new `RemoteViews` before it returns — no Glance session and no WorkManager in the tap path. Measured on an emulator: ~0.9 s for the first tap after the process was killed, ~35 ms when the process is warm (this used to be 3.3 s and 0.6 s).
 - **A small companion app** to review today, edit `habits.json` with validation, clear data and seed demo data. Plans are changed only in `habits.json` — there is no per-day plan picker, because once sync lands the config lives in your GitHub repo.
 - **Local first.** Events are appended to a local JSONL journal before anything else happens; widgets re-render immediately.
 - **Optional GitHub sync.** Connect a private repo with a fine-grained PAT (only **Contents: Read and write** + **Metadata: Read**). Each recorded value becomes one commit that appends a line to `journal/YYYY-MM/<device>.jsonl`. A durable outbox means taps never wait for the network, and retries deduplicate by event id. The app can also pull `habits.json` from the repo after validating it.
@@ -98,7 +101,7 @@ app/src/main/java/dev/habitcommit/
 ├── data/                      # config parser, plan resolver, repository, event log, demo seeder
 ├── sync/                      # GitHub client, encrypted token, outbox, WorkManager sync
 ├── ui/                        # Compose app: today, config editor, sync setup, heatmap
-└── widget/                    # Glance widgets (4×4, 4×2, 2×4, 2×2), actions, midnight refresh
+└── widget/                    # native RemoteViews widgets (4×4, 4×2, 2×4, 2×2), receivers, midnight alarm
 app/src/test/                  # JVM unit tests
 design/                        # mockups (A–J + combined) and screenshot scripts
 ```

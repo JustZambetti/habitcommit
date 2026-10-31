@@ -75,6 +75,7 @@ object GithubSyncScheduler {
 
     /** Idempotent: KEEP means a queued/running sync absorbs this request. */
     fun request(context: Context) {
+        WorkBootstrap.ensure(context)
         val request = OneTimeWorkRequestBuilder<GithubSyncWorker>()
             .setConstraints(
                 Constraints.Builder()

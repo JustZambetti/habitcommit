@@ -29,6 +29,15 @@ private val HabitColors = lightColorScheme(
 )
 
 // Material 3 shape scale, kept at the standard token values.
+/** 14-day heatmap palette, matching the widget drawables. */
+internal val HeatColors = listOf(
+    Color(0xFFEAE4D8),
+    Color(0xFFC9DCCB),
+    Color(0xFF9BC7A6),
+    Color(0xFF66A57F),
+    Color(0xFF2F6B4F),
+)
+
 private val HabitShapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),
     small = RoundedCornerShape(8.dp),

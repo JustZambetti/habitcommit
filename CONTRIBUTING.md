@@ -28,7 +28,7 @@ Unit tests cover the config parser, validation messages and plan resolution (wee
 2. **No analytics, crash reporting SDKs or proprietary dependencies.** F-Droid compatibility is a hard requirement.
 3. **Check-ins write locally first.** A slow or failing network must never block a tap.
 4. **Secrets never enter the UI tree or logs.** Future PAT handling goes through the Keystore module only.
-5. **Widget layouts stay cheap.** Use text/vector; avoid bitmaps and keep Glance containers under the 10-children limit.
+5. **Widget layouts stay cheap.** Use text/vector, avoid bitmaps, and stick to `RemoteViews`-safe view classes (`TextView`, `ImageView`, `LinearLayout`, `FrameLayout`). Dynamic containers must call `removeAllViews` before `addView`, because launchers may reapply the same `RemoteViews` instead of inflating it again.
 6. **Keep user-facing strings in Italian for now**, via `strings.xml` where practical. Localization comes with the first release.
 
 ## Commits and pull requests

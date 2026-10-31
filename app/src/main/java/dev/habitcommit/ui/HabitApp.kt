@@ -66,7 +66,6 @@ import dev.habitcommit.widget.Today22Receiver
 import dev.habitcommit.widget.Today24Receiver
 import dev.habitcommit.widget.Today42Receiver
 import dev.habitcommit.widget.Today44Receiver
-import dev.habitcommit.widget.WidgetColors
 import dev.habitcommit.widget.refreshAllWidgets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -556,7 +555,7 @@ private fun Heatmap(
                 modifier = Modifier
                     .size(cellSize)
                     .clip(RoundedCornerShape(3.dp))
-                    .background(WidgetColors.Heat[level.coerceIn(0, WidgetColors.Heat.lastIndex)]),
+                    .background(HeatColors[level.coerceIn(0, HeatColors.lastIndex)]),
             )
         }
     }
