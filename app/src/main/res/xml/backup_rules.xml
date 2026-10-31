@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Defense in depth: allowBackup is already false. -->
+    <exclude domain="file" path="sync/" />
+</full-backup-content>

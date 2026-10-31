@@ -1,0 +1,30 @@
+# Gradle
+.gradle/
+build/
+**/build/
+local.properties
+
+# Android
+*.apk
+*.aab
+dist/
+*.keystore
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Tooling (local only)
+.tooling/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Design tooling
+design/node_modules/
+design/package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db

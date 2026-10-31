@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HabitCommit</string>
+    <string name="widget_44_name">HabitCommit · Piano</string>
+    <string name="widget_42_name">HabitCommit · Compatto</string>
+    <string name="widget_22_name">HabitCommit · Focus</string>
+    <string name="widget_44_description">Piano di oggi, cinque check, streak e configurazione.</string>
+    <string name="widget_42_description">Quattro check di oggi e streak, in formato compatto.</string>
+    <string name="widget_22_description">Progresso, streak e prossimo check, in formato minimo.</string>
+    <string name="widget_24_name">HabitCommit · Verticale</string>
+    <string name="widget_24_description">Quattro check di oggi in formato verticale, con pulsante rapido.</string>
+</resources>
