@@ -159,4 +159,31 @@
     <string name="error_repo_invalid">Invalid repository name</string>
     <string name="error_branch_invalid">Invalid branch</string>
     <string name="error_journal_dir_invalid">Invalid journal folder</string>
+
+    <!-- habits.json validation, shown in the config editor -->
+    <string name="error_no_plan">No plan configured</string>
+    <string name="config_error_invalid_json">Invalid JSON: %1$s</string>
+    <string name="config_error_schema">Unsupported schema: %1$d (expected %2$d)</string>
+    <string name="config_error_timezone_missing">Missing timezone</string>
+    <string name="config_error_timezone_invalid">Invalid timezone: %1$s</string>
+    <string name="config_error_metrics_missing">Missing metrics</string>
+    <string name="config_error_metrics_not_list">metrics must be a list</string>
+    <string name="config_error_metrics_not_list_legacy">metrics must be a list (legacy key: checks)</string>
+    <string name="config_error_metric_id">Invalid metric id: \"%1$s\"</string>
+    <string name="config_error_metric_duplicate">Duplicate metric: %1$s</string>
+    <string name="config_error_metric_type">Invalid type for \"%1$s\": \"%2$s\" (expected binary or rating)</string>
+    <string name="config_error_max_binary">\"max\" is only allowed on rating metrics (metric \"%1$s\")</string>
+    <string name="config_error_max_range">Invalid max for \"%1$s\": %2$d (expected %3$d..%4$d)</string>
+    <string name="config_error_metrics_empty">No metrics defined</string>
+    <string name="config_error_plans_missing">Missing plans</string>
+    <string name="config_error_plans_not_object">plans must be an object</string>
+    <string name="config_error_plan_id">Invalid plan id: \"%1$s\"</string>
+    <string name="config_error_plan_metric">Plan \"%1$s\" uses unknown metric \"%2$s\"</string>
+    <string name="config_error_plans_empty">No plans defined</string>
+    <string name="config_error_weekday">Invalid day in schedule.byWeekday: \"%1$s\"</string>
+    <string name="config_error_weekday_plan">schedule.byWeekday.%1$s uses unknown plan \"%2$s\"</string>
+    <string name="config_error_override_date">Invalid override date: \"%1$s\"</string>
+    <string name="config_error_override_plan">Override %1$s uses unknown plan \"%2$s\"</string>
+    <string name="config_error_override_add">Override %1$s adds unknown metric \"%2$s\"</string>
+    <string name="config_error_override_remove">Override %1$s removes unknown metric \"%2$s\"</string>
 </resources>

@@ -68,27 +68,30 @@ data class HabitsConfig(
             "sun" to DayOfWeek.SUNDAY,
         )
 
-        fun parse(json: String): HabitsConfig {
+        fun parse(
+            json: String,
+            messages: ConfigMessages = EnglishConfigMessages,
+        ): HabitsConfig {
             return try {
-                parseValidated(json)
+                parseValidated(json, messages)
             } catch (e: IllegalArgumentException) {
                 throw e
             } catch (e: org.json.JSONException) {
-                throw IllegalArgumentException("JSON non valido alla riga ${e.message}", e)
+                throw IllegalArgumentException(messages.invalidJson(e.message.orEmpty()), e)
             }
         }
 
-        private fun parseValidated(json: String): HabitsConfig {
+        private fun parseValidated(json: String, messages: ConfigMessages): HabitsConfig {
             val root = JSONObject(json)
             val schema = root.optInt("schema", 0)
-            require(schema == 1) { "schema non supportato: $schema (atteso 1)" }
+            require(schema == 1) { messages.unsupportedSchema(schema, 1) }
 
             val timezone = root.optString("timezone", "").trim()
-            require(timezone.isNotEmpty()) { "timezone mancante" }
+            require(timezone.isNotEmpty()) { messages.missingTimezone() }
             try {
                 ZoneId.of(timezone)
             } catch (e: Exception) {
-                throw IllegalArgumentException("timezone non valido: $timezone")
+                throw IllegalArgumentException(messages.invalidTimezone(timezone))
             }
 
             val metrics = linkedMapOf<String, CheckDef>()
@@ -97,34 +100,27 @@ data class HabitsConfig(
             val metricsArray = root.optJSONArray("metrics")
                 ?: root.optJSONArray("checks")
                 ?: throw IllegalArgumentException(
-                    if (root.has("checks")) {
-                        "metrics deve essere una lista (chiave legacy: checks)"
-                    } else if (root.has("metrics")) {
-                        "metrics deve essere una lista"
-                    } else {
-                        "metrics mancante"
+                    when {
+                        root.has("checks") -> messages.metricsNotList(legacyKey = true)
+                        root.has("metrics") -> messages.metricsNotList(legacyKey = false)
+                        else -> messages.metricsMissing()
                     },
                 )
             for (i in 0 until metricsArray.length()) {
                 val item = metricsArray.getJSONObject(i)
                 val id = item.optString("id").trim()
-                require(idPattern.matches(id)) { "id metrica non valido: \"$id\"" }
-                require(!metrics.containsKey(id)) { "metrica duplicata: $id" }
+                require(idPattern.matches(id)) { messages.invalidMetricId(id) }
+                require(!metrics.containsKey(id)) { messages.duplicateMetric(id) }
                 val label = item.optString("label", id).trim().ifEmpty { id }
                 val typeText = item.optString("type", CheckType.BINARY.wire)
                 val type = CheckType.fromWire(typeText)
-                    ?: throw IllegalArgumentException(
-                        "tipo non valido per \"$id\": \"$typeText\" (atteso binary o rating)",
-                    )
+                    ?: throw IllegalArgumentException(messages.invalidMetricType(id, typeText))
                 val max = when {
                     item.has("max") -> {
-                        require(type == CheckType.RATING) {
-                            "\"max\" è ammesso solo per le metriche rating (metrica \"$id\")"
-                        }
+                        require(type == CheckType.RATING) { messages.maxOnlyForRating(id) }
                         val parsed = item.optInt("max", -1)
                         require(parsed in CheckDef.MIN_RATING_MAX..CheckDef.MAX_RATING_MAX) {
-                            "max non valido per \"$id\": $parsed " +
-                                "(atteso ${CheckDef.MIN_RATING_MAX}..${CheckDef.MAX_RATING_MAX})"
+                            messages.invalidMax(id, parsed, CheckDef.MIN_RATING_MAX, CheckDef.MAX_RATING_MAX)
                         }
                         parsed
                     }
@@ -137,15 +133,15 @@ data class HabitsConfig(
                     max = max,
                 )
             }
-            require(metrics.isNotEmpty()) { "metrics vuoto" }
+            require(metrics.isNotEmpty()) { messages.metricsEmpty() }
 
             val plans = linkedMapOf<String, PlanDef>()
             val plansObject = root.optJSONObject("plans")
                 ?: throw IllegalArgumentException(
-                    if (root.has("plans")) "plans deve essere un oggetto" else "plans mancante",
+                    if (root.has("plans")) messages.plansNotObject() else messages.plansMissing(),
                 )
             for (planId in plansObject.keys()) {
-                require(idPattern.matches(planId)) { "plan id non valido: \"$planId\"" }
+                require(idPattern.matches(planId)) { messages.invalidPlanId(planId) }
                 val planObject = plansObject.getJSONObject(planId)
                 val label = planObject.optString("label", planId).trim().ifEmpty { planId }
                 val itemsArray = planObject.optJSONArray("items") ?: org.json.JSONArray()
@@ -153,13 +149,13 @@ data class HabitsConfig(
                 for (i in 0 until itemsArray.length()) {
                     val checkId = itemsArray.getString(i)
                     require(metrics.containsKey(checkId)) {
-                        "il piano \"$planId\" usa la metrica sconosciuta \"$checkId\""
+                        messages.unknownMetricInPlan(planId, checkId)
                     }
                     items += checkId
                 }
                 plans[planId] = PlanDef(planId, label, items.toList())
             }
-            require(plans.isNotEmpty()) { "plans vuoto" }
+            require(plans.isNotEmpty()) { messages.plansEmpty() }
 
             val scheduleObject = root.optJSONObject("schedule")
             val byWeekday = linkedMapOf<DayOfWeek, String>()
@@ -169,10 +165,10 @@ data class HabitsConfig(
             if (weekdayObject != null) {
                 for (key in weekdayObject.keys()) {
                     val day = weekdayKeys[key]
-                        ?: throw IllegalArgumentException("giorno non valido in schedule.byWeekday: \"$key\"")
+                        ?: throw IllegalArgumentException(messages.invalidWeekday(key))
                     val planId = weekdayObject.getString(key)
                     require(plans.containsKey(planId)) {
-                        "schedule.byWeekday.$key usa il piano sconosciuto \"$planId\""
+                        messages.unknownPlanInWeekday(key, planId)
                     }
                     byWeekday[day] = planId
                 }
@@ -184,14 +180,14 @@ data class HabitsConfig(
                     val date = try {
                         LocalDate.parse(dateText)
                     } catch (e: Exception) {
-                        throw IllegalArgumentException("data override non valida: \"$dateText\"")
+                        throw IllegalArgumentException(messages.invalidOverrideDate(dateText))
                     }
                     val value = overridesObject.getJSONObject(dateText)
                     when {
                         value.has("plan") -> {
                             val planId = value.getString("plan")
                             require(plans.containsKey(planId)) {
-                                "override $dateText usa il piano sconosciuto \"$planId\""
+                                messages.unknownPlanInOverride(dateText, planId)
                             }
                             overrides[date] = DayOverride.UsePlan(planId)
                         }
@@ -200,12 +196,12 @@ data class HabitsConfig(
                             val remove = value.optJSONArray("remove").stringList()
                             add.forEach {
                                 require(metrics.containsKey(it)) {
-                                    "override $dateText aggiunge la metrica sconosciuta \"$it\""
+                                    messages.unknownMetricAdded(dateText, it)
                                 }
                             }
                             remove.forEach {
                                 require(metrics.containsKey(it)) {
-                                    "override $dateText rimuove la metrica sconosciuta \"$it\""
+                                    messages.unknownMetricRemoved(dateText, it)
                                 }
                             }
                             overrides[date] = DayOverride.Modify(add = add, remove = remove)

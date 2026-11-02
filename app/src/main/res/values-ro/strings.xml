@@ -162,4 +162,31 @@
     <string name="error_repo_invalid">Nume de repo nevalid</string>
     <string name="error_branch_invalid">Branch nevalid</string>
     <string name="error_journal_dir_invalid">Folder journal nevalid</string>
+
+    <!-- habits.json validation, shown in the config editor -->
+    <string name="error_no_plan">Niciun plan configurat</string>
+    <string name="config_error_invalid_json">JSON nevalid: %1$s</string>
+    <string name="config_error_schema">Schema nesuportată: %1$d (se aștepta %2$d)</string>
+    <string name="config_error_timezone_missing">Timezone lipsă</string>
+    <string name="config_error_timezone_invalid">Timezone nevalid: %1$s</string>
+    <string name="config_error_metrics_missing">metrics lipsă</string>
+    <string name="config_error_metrics_not_list">metrics trebuie să fie o listă</string>
+    <string name="config_error_metrics_not_list_legacy">metrics trebuie să fie o listă (cheie legacy: checks)</string>
+    <string name="config_error_metric_id">ID de metrică nevalid: \"%1$s\"</string>
+    <string name="config_error_metric_duplicate">Metrică duplicată: %1$s</string>
+    <string name="config_error_metric_type">Tip nevalid pentru \"%1$s\": \"%2$s\" (se aștepta binary sau rating)</string>
+    <string name="config_error_max_binary">\"max\" este permis doar pentru metricile rating (metrica \"%1$s\")</string>
+    <string name="config_error_max_range">max nevalid pentru \"%1$s\": %2$d (se aștepta %3$d..%4$d)</string>
+    <string name="config_error_metrics_empty">Nicio metrică definită</string>
+    <string name="config_error_plans_missing">plans lipsă</string>
+    <string name="config_error_plans_not_object">plans trebuie să fie un obiect</string>
+    <string name="config_error_plan_id">ID de plan nevalid: \"%1$s\"</string>
+    <string name="config_error_plan_metric">Planul \"%1$s\" folosește metrica necunoscută \"%2$s\"</string>
+    <string name="config_error_plans_empty">Niciun plan definit</string>
+    <string name="config_error_weekday">Zi nevalidă în schedule.byWeekday: \"%1$s\"</string>
+    <string name="config_error_weekday_plan">schedule.byWeekday.%1$s folosește planul necunoscut \"%2$s\"</string>
+    <string name="config_error_override_date">Dată override nevalidă: \"%1$s\"</string>
+    <string name="config_error_override_plan">Override-ul %1$s folosește planul necunoscut \"%2$s\"</string>
+    <string name="config_error_override_add">Override-ul %1$s adaugă metrica necunoscută \"%2$s\"</string>
+    <string name="config_error_override_remove">Override-ul %1$s elimină metrica necunoscută \"%2$s\"</string>
 </resources>

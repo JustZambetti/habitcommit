@@ -95,7 +95,7 @@ class HabitsConfigTest {
     fun `rejects unknown check type`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "read", "type": "scale"}], "plans": {"p": {"items": ["read"]}}}""",
-            "tipo non valido",
+            "Invalid type",
         )
     }
 
@@ -103,11 +103,11 @@ class HabitsConfigTest {
     fun `rejects rating max out of range`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "focus", "type": "rating", "max": 1}], "plans": {"p": {"items": ["focus"]}}}""",
-            "max non valido",
+            "Invalid max",
         )
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "focus", "type": "rating", "max": 11}], "plans": {"p": {"items": ["focus"]}}}""",
-            "max non valido",
+            "Invalid max",
         )
     }
 
@@ -115,24 +115,24 @@ class HabitsConfigTest {
     fun `rejects max on a binary check`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "read", "max": 5}], "plans": {"p": {"items": ["read"]}}}""",
-            "ammesso solo per le metriche rating",
+            "only allowed on rating metrics",
         )
     }
 
     @Test
     fun `malformed json reports a friendly error`() {
-        assertInvalid("{ not json", "JSON non valido")
+        assertInvalid("{ not json", "Invalid JSON")
     }
 
     @Test
     fun `wrong field type reports a friendly error`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": "read", "plans": {"p": {"items": []}}}""",
-            "metrics deve essere una lista",
+            "metrics must be a list",
         )
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "read"}], "plans": []}""",
-            "plans deve essere un oggetto",
+            "plans must be an object",
         )
     }
 
@@ -140,7 +140,7 @@ class HabitsConfigTest {
     fun `rejects unsupported schema`() {
         assertInvalid(
             """{"schema": 2, "timezone": "Europe/Rome", "metrics": [{"id": "read"}], "plans": {"p": {"items": ["read"]}}}""",
-            "schema non supportato",
+            "Unsupported schema",
         )
     }
 
@@ -148,7 +148,7 @@ class HabitsConfigTest {
     fun `rejects invalid timezone`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Mars/Olympus", "metrics": [{"id": "read"}], "plans": {"p": {"items": ["read"]}}}""",
-            "timezone non valido",
+            "Invalid timezone",
         )
     }
 
@@ -156,7 +156,7 @@ class HabitsConfigTest {
     fun `rejects invalid check id`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "Review PR"}], "plans": {"p": {"items": []}}}""",
-            "id metrica non valido",
+            "Invalid metric id",
         )
     }
 
@@ -164,7 +164,7 @@ class HabitsConfigTest {
     fun `rejects duplicate check ids`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "read"}, {"id": "read"}], "plans": {"p": {"items": []}}}""",
-            "metrica duplicata",
+            "Duplicate metric",
         )
     }
 
@@ -172,7 +172,7 @@ class HabitsConfigTest {
     fun `rejects plan referencing unknown check`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "read"}], "plans": {"p": {"items": ["gym"]}}}""",
-            "metrica sconosciuta \"gym\"",
+            "unknown metric \"gym\"",
         )
     }
 
@@ -180,7 +180,7 @@ class HabitsConfigTest {
     fun `rejects empty plans`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "read"}], "plans": {}}""",
-            "plans vuoto",
+            "No plans defined",
         )
     }
 
@@ -188,7 +188,7 @@ class HabitsConfigTest {
     fun `rejects unknown plan in weekday schedule`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "read"}], "plans": {"p": {"items": ["read"]}}, "schedule": {"byWeekday": {"mon": "missing"}}}""",
-            "piano sconosciuto",
+            "unknown plan",
         )
     }
 
@@ -196,7 +196,7 @@ class HabitsConfigTest {
     fun `rejects invalid weekday key`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "read"}], "plans": {"p": {"items": ["read"]}}, "schedule": {"byWeekday": {"monday": "p"}}}""",
-            "giorno non valido",
+            "Invalid day",
         )
     }
 
@@ -204,7 +204,7 @@ class HabitsConfigTest {
     fun `rejects invalid override date`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "read"}], "plans": {"p": {"items": ["read"]}}, "schedule": {"overrides": {"next monday": {"plan": "p"}}}}""",
-            "data override non valida",
+            "Invalid override date",
         )
     }
 
@@ -212,7 +212,7 @@ class HabitsConfigTest {
     fun `rejects override adding unknown check`() {
         assertInvalid(
             """{"schema": 1, "timezone": "Europe/Rome", "metrics": [{"id": "read"}], "plans": {"p": {"items": ["read"]}}, "schedule": {"overrides": {"2026-11-04": {"add": ["gym"]}}}}""",
-            "metrica sconosciuta \"gym\"",
+            "unknown metric \"gym\"",
         )
     }
 }

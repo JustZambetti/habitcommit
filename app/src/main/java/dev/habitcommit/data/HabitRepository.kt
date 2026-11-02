@@ -78,6 +78,7 @@ class HabitRepository(private val context: Context) {
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val configFile = File(context.filesDir, "habits.json")
     private val eventLog = EventLog(File(context.filesDir, "journal"))
+    private val configMessages = ResourceConfigMessages(context.resources)
 
     private val configLock = Any()
 
@@ -124,13 +125,13 @@ class HabitRepository(private val context: Context) {
             }
             val text = configFile.readText()
             return try {
-                HabitsConfig.parse(text).also {
+                HabitsConfig.parse(text, configMessages).also {
                     cachedConfig = it
                     configError = null
                 }
             } catch (e: Exception) {
                 configError = e.message ?: context.getString(R.string.invalid_configuration)
-                HabitsConfig.parse(readSample())
+                HabitsConfig.parse(readSample(), configMessages)
             }
         }
     }
@@ -139,7 +140,7 @@ class HabitRepository(private val context: Context) {
 
     fun saveConfig(text: String): Result<Unit> {
         return try {
-            val parsed = HabitsConfig.parse(text)
+            val parsed = HabitsConfig.parse(text, configMessages)
             synchronized(configLock) {
                 configFile.writeText(text)
                 cachedConfig = parsed
@@ -161,7 +162,7 @@ class HabitRepository(private val context: Context) {
         val zone = config.zone
         val day = date ?: LocalDate.now(zone)
         val resolved = PlanResolver.resolve(config, day)
-            ?: error("Nessun piano configurato")
+            ?: error(context.getString(R.string.error_no_plan))
 
         val events = eventLog.readAll()
         val latest = latestEvents(events)

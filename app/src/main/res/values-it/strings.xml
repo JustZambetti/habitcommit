@@ -159,4 +159,31 @@
     <string name="error_repo_invalid">Nome repo non valido</string>
     <string name="error_branch_invalid">Branch non valido</string>
     <string name="error_journal_dir_invalid">Cartella journal non valida</string>
+
+    <!-- habits.json validation, shown in the config editor -->
+    <string name="error_no_plan">Nessun piano configurato</string>
+    <string name="config_error_invalid_json">JSON non valido: %1$s</string>
+    <string name="config_error_schema">Schema non supportato: %1$d (atteso %2$d)</string>
+    <string name="config_error_timezone_missing">Timezone mancante</string>
+    <string name="config_error_timezone_invalid">Timezone non valido: %1$s</string>
+    <string name="config_error_metrics_missing">metrics mancante</string>
+    <string name="config_error_metrics_not_list">metrics deve essere una lista</string>
+    <string name="config_error_metrics_not_list_legacy">metrics deve essere una lista (chiave legacy: checks)</string>
+    <string name="config_error_metric_id">ID metrica non valido: \"%1$s\"</string>
+    <string name="config_error_metric_duplicate">Metrica duplicata: %1$s</string>
+    <string name="config_error_metric_type">Tipo non valido per \"%1$s\": \"%2$s\" (atteso binary o rating)</string>
+    <string name="config_error_max_binary">\"max\" è ammesso solo per le metriche rating (metrica \"%1$s\")</string>
+    <string name="config_error_max_range">max non valido per \"%1$s\": %2$d (atteso %3$d..%4$d)</string>
+    <string name="config_error_metrics_empty">Nessuna metrica definita</string>
+    <string name="config_error_plans_missing">plans mancante</string>
+    <string name="config_error_plans_not_object">plans deve essere un oggetto</string>
+    <string name="config_error_plan_id">ID piano non valido: \"%1$s\"</string>
+    <string name="config_error_plan_metric">Il piano \"%1$s\" usa la metrica sconosciuta \"%2$s\"</string>
+    <string name="config_error_plans_empty">Nessun piano definito</string>
+    <string name="config_error_weekday">Giorno non valido in schedule.byWeekday: \"%1$s\"</string>
+    <string name="config_error_weekday_plan">schedule.byWeekday.%1$s usa il piano sconosciuto \"%2$s\"</string>
+    <string name="config_error_override_date">Data override non valida: \"%1$s\"</string>
+    <string name="config_error_override_plan">L’override %1$s usa il piano sconosciuto \"%2$s\"</string>
+    <string name="config_error_override_add">L’override %1$s aggiunge la metrica sconosciuta \"%2$s\"</string>
+    <string name="config_error_override_remove">L’override %1$s rimuove la metrica sconosciuta \"%2$s\"</string>
 </resources>

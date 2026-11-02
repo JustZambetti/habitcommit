@@ -924,7 +924,7 @@ private fun ConfigScreen(
                     text = initialText
                     error = null
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(4f),
             ) {
                 Text(stringResource(R.string.action_restore))
             }
@@ -936,7 +936,7 @@ private fun ConfigScreen(
                         error = it.message ?: invalidConfiguration
                     }
                 },
-                modifier = Modifier.weight(2f),
+                modifier = Modifier.weight(6f),
             ) {
                 Text(stringResource(R.string.action_save_reload))
             }
