@@ -94,7 +94,7 @@
     <string name="range_chip">%1$d g</string>
     <string name="history_loading">Carico lo storico…</string>
     <string name="history_empty">Nessun dato: registra qualche valore dal widget e torna qui.</string>
-    <string name="history_legend">Quadrato vuoto: non in piano quel giorno. Chiaro: in piano ma non registrato. Pieno: fatto. Per i rating il colore sale con il voto.</string>
+    <string name="history_legend">Quadrato vuoto: non in piano quel giorno. Chiaro: in piano ma non registrato. Pieno: fatto. I rating hanno un grafico a punti: i giorni adiacenti sono collegati.</string>
     <string name="history_metric_days">%1$d/%2$d giorni</string>
     <string name="history_average">★ %1$s</string>
     <string name="history_recent">ULTIMI GIORNI</string>

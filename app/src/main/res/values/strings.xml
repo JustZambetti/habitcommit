@@ -94,7 +94,7 @@
     <string name="range_chip">%1$d d</string>
     <string name="history_loading">Loading history…</string>
     <string name="history_empty">No data yet: record a value from the widget and come back.</string>
-    <string name="history_legend">Empty square: not in that day\'s plan. Pale: planned but not recorded. Filled: done. For ratings the colour deepens with the score.</string>
+    <string name="history_legend">Empty square: not in that day\'s plan. Pale: planned but not recorded. Filled: done. Ratings show a dot chart: dots on adjacent days are joined.</string>
     <string name="history_metric_days">%1$d/%2$d days</string>
     <string name="history_average">★ %1$s</string>
     <string name="history_recent">RECENT DAYS</string>

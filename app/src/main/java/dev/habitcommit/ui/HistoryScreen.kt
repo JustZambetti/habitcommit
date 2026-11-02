@@ -1,5 +1,6 @@
 package dev.habitcommit.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -36,7 +37,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -207,8 +211,94 @@ private fun MetricHistoryCard(metric: HistoryMetric, state: HistoryState) {
                 )
             }
             Spacer(Modifier.height(10.dp))
-            MetricStrip(metric = metric, days = state.days)
+            if (metric.def.type == CheckType.RATING) {
+                RatingChart(metric = metric, days = state.days)
+            } else {
+                MetricStrip(metric = metric, days = state.days)
+            }
         }
+    }
+}
+
+/**
+ * Line chart for rating metrics: one dot per recorded day, at its score.
+ * Recorded values on adjacent days are joined; a gap or an unrecorded day
+ * breaks the line. Planned-but-unrecorded days get a faint dot at the baseline.
+ */
+@Composable
+private fun RatingChart(metric: HistoryMetric, days: List<LocalDate>) {
+    val count = metric.values.size
+    val max = metric.def.maxValue.coerceAtLeast(1)
+    val color = MaterialTheme.colorScheme.primary
+    val muted = MaterialTheme.colorScheme.outlineVariant
+    val density = LocalDensity.current
+    val fixedCell = 16.dp
+    val chartHeight = 64.dp
+    val scrollable = count > 14
+    // Constrain the whole column, not just the canvas: StripLabels uses a
+    // weighted row and needs a bounded width to lay out on one line.
+    val containerModifier = if (scrollable) {
+        Modifier
+            .horizontalScroll(rememberScrollState(initial = Int.MAX_VALUE))
+            .width(fixedCell * count)
+    } else {
+        Modifier
+    }
+
+    Column(containerModifier) {
+        Canvas(modifier = Modifier.fillMaxWidth().height(chartHeight)) {
+            val step = size.width / count.coerceAtLeast(1)
+            fun x(index: Int): Float = step * (index + 0.5f)
+            val topPad = with(density) { 7.dp.toPx() }
+            val bottomPad = with(density) { 5.dp.toPx() }
+            val baseline = size.height - bottomPad
+            val usable = (baseline - topPad).coerceAtLeast(1f)
+            fun y(value: Int): Float =
+                baseline - usable * value.toFloat().div(max)
+
+            val stroke = with(density) { 1.5.dp.toPx() }
+            val dotRadius = with(density) { 3.dp.toPx() }
+            val faintRadius = with(density) { 1.5.dp.toPx() }
+
+            drawLine(
+                color = muted.copy(alpha = 0.5f),
+                start = Offset(0f, baseline),
+                end = Offset(size.width, baseline),
+                strokeWidth = with(density) { 1.dp.toPx() },
+            )
+
+            var previousIndex: Int? = null
+            var previousValue = 0
+            metric.values.forEachIndexed { index, value ->
+                if (value != null && value > 0) {
+                    val point = Offset(x(index), y(value))
+                    val previous = previousIndex
+                    if (previous != null && previous == index - 1) {
+                        drawLine(
+                            color = color.copy(alpha = 0.8f),
+                            start = Offset(x(previous), y(previousValue)),
+                            end = point,
+                            strokeWidth = stroke,
+                            cap = StrokeCap.Round,
+                        )
+                    }
+                    drawCircle(color = color, radius = dotRadius, center = point)
+                    previousIndex = index
+                    previousValue = value
+                } else {
+                    if (value != null) {
+                        // Planned but not recorded.
+                        drawCircle(
+                            color = muted,
+                            radius = faintRadius,
+                            center = Offset(x(index), baseline),
+                        )
+                    }
+                    previousIndex = null
+                }
+            }
+        }
+        StripLabels(days)
     }
 }
 

@@ -97,7 +97,7 @@
     <string name="range_chip">%1$d z</string>
     <string name="history_loading">Încarc istoricul…</string>
     <string name="history_empty">Nicio dată: înregistrează o valoare din widget și revino.</string>
-    <string name="history_legend">Pătrat gol: nu era în planul acelei zile. Pal: planificat, dar neînregistrat. Plin: făcut. La rating, culoarea se intensifică odată cu nota.</string>
+    <string name="history_legend">Pătrat gol: nu era în planul acelei zile. Pal: planificat, dar neînregistrat. Plin: făcut. Ratingurile au un grafic cu puncte: zilele adiacente sunt unite.</string>
     <string name="history_metric_days">%1$d/%2$d zile</string>
     <string name="history_average">★ %1$s</string>
     <string name="history_recent">ULTIMELE ZILE</string>
