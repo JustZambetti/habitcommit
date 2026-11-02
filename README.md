@@ -19,6 +19,7 @@ Source: [github.com/JustZambetti/habitcommit](https://github.com/JustZambetti/ha
 - **Local first.** Events are appended to a local JSONL journal before anything else happens; widgets re-render immediately.
 - **Optional GitHub sync.** Connect a private repo with a fine-grained PAT (only **Contents: Read and write** + **Metadata: Read**). Recorded values wait in a durable local outbox and are flushed **once a day** (around 22:00 local time, when the phone is online) as a **single commit per journal file**, appending one line per value to `journal/YYYY-MM/<device>.jsonl`; **Sync now** forces an immediate run. Taps never wait for the network, and retries deduplicate by event id. `habits.json` is **pulled automatically from the repo**: on every app resume and at the start of each sync run (throttled to one attempt every 5 minutes) the app downloads it, validates it and replaces the local copy when it differs, then refreshes the widgets. The repo is the source of truth for plans; a manual **Download habits.json** button remains in the sync screen. The setup screen asks **only for the PAT**: as soon as a plausible token is entered it looks up the visible repositories and proposes one (with a picker when the token sees several; a PAT scoped to one repo lists only that one). Owner and name are read-only; branch and HabitCommit path are editable and prefill with the repository default and `journal`.
 - **English, Italian and Romanian.** Every screen, widget label and sync error follows the device language (`values/`, `values-it/`, `values-ro/`); the sample `habits.json` is seeded in the same language.
+- **Agent-ready data repo.** [`agent/`](agent/README.md) ships a self-contained skill ([`SKILL.md`](agent/skill/SKILL.md)), a JSON Schema, a starter `habits.json` and a standard-library CLI (`validate`, `today`, `stats`), so an AI agent can safely edit plans and read the journal. Paste one line to point Claude at it, or install it as a personal skill.
 
 Example config (shipped as `app/src/main/assets/sample_habits.json`):
 
@@ -104,6 +105,7 @@ app/src/main/java/dev/habitcommit/
 ├── ui/                        # Compose app: today, history, settings, sync setup, heatmap
 └── widget/                    # native RemoteViews widgets (4×4, 4×2, 2×4, 2×2), receivers, midnight alarm
 app/src/test/                  # JVM unit tests
+agent/                         # AI-agent skill, data-repo CLI, JSON Schema, starter habits.json
 design/                        # mockups (A–J + combined) and screenshot scripts
 ```
 

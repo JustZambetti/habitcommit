@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "timezone": "Europe/Rome",
+  "metrics": [
+    {"id": "workout", "label": "Workout", "type": "binary"},
+    {"id": "focus", "label": "Focus", "type": "rating", "max": 5}
+  ],
+  "plans": {
+    "weekday": {"label": "Weekday", "items": ["workout", "focus"]},
+    "weekend": {"label": "Weekend", "items": ["focus"]}
+  },
+  "schedule": {
+    "byWeekday": {
+      "mon": "weekday",
+      "tue": "weekday",
+      "wed": "weekday",
+      "thu": "weekday",
+      "fri": "weekday",
+      "sat": "weekend",
+      "sun": "weekend"
+    }
+  }
+}
