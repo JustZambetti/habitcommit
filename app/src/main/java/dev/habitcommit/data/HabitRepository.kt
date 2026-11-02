@@ -19,6 +19,38 @@ data class CheckUi(
     val done: Boolean get() = value > 0
 }
 
+data class HistoryMetric(
+    val def: CheckDef,
+    /** One entry per day in [HistoryState.days]; null when the metric was not in that day's plan. */
+    val values: List<Int?>,
+    val plannedDays: Int,
+    val activeDays: Int,
+) {
+    /** Mean of the recorded values above zero; null for binary metrics or when never recorded. */
+    val average: Double?
+        get() = if (def.type != CheckType.RATING) {
+            null
+        } else {
+            values.mapNotNull { it?.takeIf { value -> value > 0 } }
+                .takeIf { it.isNotEmpty() }
+                ?.average()
+        }
+}
+
+data class HistoryDay(
+    val date: LocalDate,
+    val planLabel: String,
+    val done: Int,
+    val total: Int,
+)
+
+data class HistoryState(
+    val days: List<LocalDate>,
+    val metrics: List<HistoryMetric>,
+    val recentDays: List<HistoryDay>,
+    val zone: ZoneId,
+)
+
 data class TodayState(
     val date: LocalDate,
     val plan: PlanDef,
@@ -162,6 +194,48 @@ class HabitRepository(private val context: Context) {
             configError = configError,
             zone = zone,
         )
+    }
+
+    /** Per-metric values and per-day totals for the last [days] days, oldest first. */
+    fun history(days: Int = 30, today: LocalDate? = null): HistoryState {
+        val config = config()
+        val zone = config.zone
+        val end = today ?: LocalDate.now(zone)
+        val dates = (days - 1 downTo 0).map { end.minusDays(it.toLong()) }
+        val latest = latestEvents(eventLog.readAll())
+        val plans = dates.associateWith { PlanResolver.resolve(config, it) }
+
+        val metrics = config.metrics.values.mapNotNull { def ->
+            val values = dates.map { date ->
+                val resolved = plans[date] ?: return@map null
+                if (resolved.metrics.none { it.id == def.id }) return@map null
+                (latest[date to def.id]?.value ?: 0).coerceIn(0, def.maxValue)
+            }
+            if (values.all { it == null }) {
+                null
+            } else {
+                HistoryMetric(
+                    def = def,
+                    values = values,
+                    plannedDays = values.count { it != null },
+                    activeDays = values.count { (it ?: 0) > 0 },
+                )
+            }
+        }
+
+        // The detail list stays readable: last week when the range is longer.
+        val recentDays = dates.takeLast(7).map { date ->
+            val resolved = plans[date]
+            val planned = resolved?.metrics.orEmpty()
+            HistoryDay(
+                date = date,
+                planLabel = resolved?.plan?.label ?: "—",
+                done = planned.count { (latest[date to it.id]?.value ?: 0) > 0 },
+                total = planned.size,
+            )
+        }
+
+        return HistoryState(days = dates, metrics = metrics, recentDays = recentDays, zone = zone)
     }
 
     /**

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
@@ -44,8 +45,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.habitcommit.data.HabitRepository
+import dev.habitcommit.sync.GithubClient
 import dev.habitcommit.sync.GithubSyncScheduler
 import dev.habitcommit.sync.GithubTarget
+import dev.habitcommit.sync.RepoSummary
 import dev.habitcommit.sync.SyncManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -80,6 +83,8 @@ fun SyncScreen(
     var message by remember { mutableStateOf<String?>(null) }
     var isError by remember { mutableStateOf(false) }
     var confirmPull by remember { mutableStateOf(false) }
+    var repos by remember { mutableStateOf<List<RepoSummary>?>(null) }
+    var loadingRepos by remember { mutableStateOf(false) }
 
     // The token field must not appear in screenshots or the recents thumbnail.
     DisposableEffect(Unit) {
@@ -180,6 +185,52 @@ fun SyncScreen(
                     Text(if (showToken) "Nascondi" else "Mostra", fontSize = 11.sp)
                 }
             },
+        )
+
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = {
+                val effectiveToken = token.ifBlank { syncManager.token() }
+                if (effectiveToken.isNullOrBlank()) {
+                    report("Inserisci un token GitHub per elencare i repo", true)
+                    return@OutlinedButton
+                }
+                loadingRepos = true
+                message = null
+                scope.launch {
+                    val loaded = withContext(Dispatchers.IO) {
+                        GithubClient.listRepositories(effectiveToken)
+                    }
+                    loaded.fold(
+                        onSuccess = { list ->
+                            repos = list
+                            if (list.isEmpty()) {
+                                report(
+                                    "Nessun repo visibile: il token non copre nessun repository. " +
+                                        "Aggiungine uno al PAT o inserisci owner e repo a mano.",
+                                    true,
+                                )
+                            }
+                        },
+                        onFailure = { report(it.message ?: "Elenco repo fallito", true) },
+                    )
+                    loadingRepos = false
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !busy && !loadingRepos,
+        ) {
+            Text(if (loadingRepos) "Carico i repo…" else "Scegli repo da GitHub", fontSize = 12.sp)
+        }
+
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = "L'elenco mostra i repo visibili al token: un PAT fine-grained limitato a un " +
+                "singolo repo vede solo quello. Per vedere più repo deve avere Metadata: Read " +
+                "su ciascuno (Contents: Read and write resta necessario per scrivere).",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 10.sp,
+            lineHeight = 15.sp,
         )
 
         Spacer(Modifier.height(10.dp))
@@ -304,6 +355,50 @@ fun SyncScreen(
         }
 
         Spacer(Modifier.height(24.dp))
+    }
+
+    repos?.let { list ->
+        AlertDialog(
+            onDismissRequest = { repos = null },
+            title = { Text("Scegli repo") },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    Text(
+                        text = "${list.size} repo visibili al token, aggiornati di recente in cima.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.sp,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    list.forEach { summary ->
+                        TextButton(
+                            onClick = {
+                                owner = summary.owner
+                                repo = summary.name
+                                message = null
+                                repos = null
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(summary.fullName, fontSize = 13.sp)
+                                Text(
+                                    text = if (summary.isPrivate) "privato" else "pubblico",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 10.sp,
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { repos = null }) { Text("Chiudi") }
+            },
+        )
     }
 
     if (confirmPull) {

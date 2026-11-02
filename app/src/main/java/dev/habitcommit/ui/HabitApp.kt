@@ -88,6 +88,7 @@ fun HabitApp(
     var today by remember { mutableStateOf<TodayState?>(null) }
     var showConfig by remember { mutableStateOf(false) }
     var showSync by remember { mutableStateOf(false) }
+    var showHistory by remember { mutableStateOf(false) }
     var reloadKey by remember { mutableIntStateOf(0) }
     val syncStatus by syncManager.status.collectAsState()
 
@@ -143,6 +144,11 @@ fun HabitApp(
                     reload()
                 },
             )
+        } else if (showHistory) {
+            HistoryScreen(
+                repository = repository,
+                onClose = { showHistory = false },
+            )
         } else if (showConfig) {
             ConfigScreen(
                 initialText = remember(showConfig) { repository.configText() },
@@ -172,6 +178,7 @@ fun HabitApp(
             ) {
                 AppHeader(
                     state = state,
+                    onOpenHistory = { showHistory = true },
                     onOpenConfig = { showConfig = true },
                 )
 
@@ -245,7 +252,11 @@ fun HabitApp(
 }
 
 @Composable
-private fun AppHeader(state: TodayState, onOpenConfig: () -> Unit) {
+private fun AppHeader(
+    state: TodayState,
+    onOpenHistory: () -> Unit,
+    onOpenConfig: () -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top,
@@ -269,6 +280,9 @@ private fun AppHeader(state: TodayState, onOpenConfig: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 14.sp,
             )
+        }
+        TextButton(onClick = onOpenHistory) {
+            Text("Storico")
         }
         TextButton(onClick = onOpenConfig) {
             Text("Config")

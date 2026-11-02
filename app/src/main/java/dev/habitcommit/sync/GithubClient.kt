@@ -1,10 +1,19 @@
 package dev.habitcommit.sync
 
 import android.util.Base64
+import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+
+/** A repository visible to the PAT, as returned by GET /user/repos. */
+data class RepoSummary(
+    val owner: String,
+    val name: String,
+    val fullName: String,
+    val isPrivate: Boolean,
+)
 
 /**
  * Minimal client for the GitHub Contents and repository APIs.
@@ -150,33 +159,8 @@ class GithubClient(
         }
     }
 
-    private fun request(method: String, path: String, body: String? = null): Response {
-        val connection = (URL(API_BASE + path).openConnection() as HttpURLConnection).apply {
-            requestMethod = method
-            connectTimeout = 20_000
-            readTimeout = 20_000
-            useCaches = false
-            setRequestProperty("Authorization", "Bearer $token")
-            setRequestProperty("Accept", "application/vnd.github+json")
-            setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
-            setRequestProperty("User-Agent", "HabitCommit")
-            if (body != null) {
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json; charset=utf-8")
-            }
-        }
-        try {
-            if (body != null) {
-                connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
-            }
-            val code = connection.responseCode
-            val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-            val text = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-            return Response(code, text)
-        } finally {
-            connection.disconnect()
-        }
-    }
+    private fun request(method: String, path: String, body: String? = null): Response =
+        httpRequest(token, method, path, body)
 
     private fun errorFor(response: Response): String {
         val message = try {
@@ -208,9 +192,90 @@ class GithubClient(
 
     class GithubException(message: String, val retryable: Boolean = false) : Exception(message)
 
-    private companion object {
-        const val API_BASE = "https://api.github.com"
-        const val MAX_CONTENT_BYTES = 1_000_000L
-        const val MAX_CONFLICT_RETRIES = 4
+    companion object {
+
+        private const val API_BASE = "https://api.github.com"
+        private const val MAX_CONTENT_BYTES = 1_000_000L
+        private const val MAX_CONFLICT_RETRIES = 4
+
+        private fun httpRequest(token: String, method: String, path: String, body: String? = null): Response {
+            val connection = (URL(API_BASE + path).openConnection() as HttpURLConnection).apply {
+                requestMethod = method
+                connectTimeout = 20_000
+                readTimeout = 20_000
+                useCaches = false
+                setRequestProperty("Authorization", "Bearer $token")
+                setRequestProperty("Accept", "application/vnd.github+json")
+                setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
+                setRequestProperty("User-Agent", "HabitCommit")
+                if (body != null) {
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                }
+            }
+            try {
+                if (body != null) {
+                    connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+                }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val text = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+                return Response(code, text)
+            } finally {
+                connection.disconnect()
+            }
+        }
+
+        /**
+         * Repositories the PAT can see, most recently updated first.
+         *
+         * A fine-grained PAT scoped to a single repository only lists that one;
+         * listing a wider set needs the token to cover those repositories too
+         * (Contents: Read and write + Metadata: Read stays the narrowest useful set).
+         * Only the first page (100 repos) is fetched.
+         */
+        fun listRepositories(token: String): Result<List<RepoSummary>> = try {
+            val path = "/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member"
+            val response = httpRequest(token, "GET", path)
+            if (response.code == 200) {
+                val array = JSONArray(response.body)
+                val repos = buildList {
+                    for (i in 0 until array.length()) {
+                        val json = array.optJSONObject(i) ?: continue
+                        val fullName = json.optString("full_name")
+                        val names = fullName.split('/', limit = 2)
+                        if (names.size != 2) continue
+                        add(
+                            RepoSummary(
+                                owner = names[0],
+                                name = names[1],
+                                fullName = fullName,
+                                isPrivate = json.optBoolean("private", false),
+                            ),
+                        )
+                    }
+                }
+                Result.success(repos)
+            } else {
+                Result.failure(GithubException(staticErrorFor(response), retryable = response.code >= 500))
+            }
+        } catch (e: Exception) {
+            Result.failure(GithubException("Errore di rete: ${e.javaClass.simpleName}", retryable = true))
+        }
+
+        private fun staticErrorFor(response: Response): String {
+            val message = try {
+                JSONObject(response.body).optString("message")
+            } catch (e: Exception) {
+                ""
+            }
+            val detail = message.take(200).ifBlank { "HTTP ${response.code}" }
+            return when (response.code) {
+                401 -> "Token non valido o scaduto. Genera un nuovo PAT."
+                403 -> "Permessi insufficienti o rate limit. Serve Contents: Read and write + Metadata: Read."
+                404 -> "$detail. Controlla i permessi del token."
+                else -> detail
+            }
+        }
     }
 }
