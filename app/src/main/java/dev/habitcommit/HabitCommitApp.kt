@@ -21,6 +21,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.time.Instant
 
 class HabitCommitApp : Application() {
 
@@ -91,5 +93,35 @@ class HabitCommitApp : Application() {
 
     fun clearSyncOutbox() {
         syncOutbox.clear()
+    }
+
+    /**
+     * Pulls habits.json from the configured repo when the local copy differs.
+     *
+     * The repo is the source of truth for plans. Attempts are throttled so that
+     * repeated resumes or sync runs do not hit the API unless needed. Returns
+     * true when the local config changed, so the caller can refresh UI/widgets.
+     */
+    suspend fun pullConfigFromGithub(force: Boolean = false): Boolean =
+        withContext(Dispatchers.IO) {
+            if (!isSyncConfigured()) return@withContext false
+            val now = Instant.now().epochSecond
+            if (!force && now - syncSettings.configPullAt() < CONFIG_PULL_THROTTLE_SECONDS) {
+                return@withContext false
+            }
+            syncSettings.setConfigPullAt(now)
+            val remote = syncManager.downloadConfig().getOrNull() ?: return@withContext false
+            if (remote == repository.configText()) return@withContext false
+            repository.saveConfig(remote).fold(
+                onSuccess = {
+                    syncManager.noteConfigPulled()
+                    true
+                },
+                onFailure = { false },
+            )
+        }
+
+    private companion object {
+        const val CONFIG_PULL_THROTTLE_SECONDS = 300L
     }
 }

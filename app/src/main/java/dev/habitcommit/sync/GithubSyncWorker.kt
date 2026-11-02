@@ -11,6 +11,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dev.habitcommit.HabitCommitApp
 import dev.habitcommit.R
+import dev.habitcommit.widget.refreshAllWidgets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -31,6 +32,11 @@ class GithubSyncWorker(
         val token = manager.token() ?: run {
             manager.recordFailure(applicationContext.getString(R.string.sync_token_missing))
             return@withContext Result.failure()
+        }
+
+        // Plans live in the repo: refresh them even when there is nothing to push.
+        if (app.pullConfigFromGithub()) {
+            refreshAllWidgets(applicationContext)
         }
 
         val pending = manager.outbox.pending()

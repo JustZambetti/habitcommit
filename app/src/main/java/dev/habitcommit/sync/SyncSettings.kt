@@ -43,6 +43,13 @@ class SyncSettings(context: Context) {
             .apply()
     }
 
+    /** Epoch second of the last automatic habits.json pull, used for throttling. */
+    fun configPullAt(): Long = prefs.getLong(KEY_CONFIG_PULL_AT, 0L)
+
+    fun setConfigPullAt(epochSecond: Long) {
+        prefs.edit().putLong(KEY_CONFIG_PULL_AT, epochSecond).apply()
+    }
+
     private companion object {
         const val PREFS = "habitcommit_sync"
         const val KEY_OWNER = "owner"
@@ -50,5 +57,6 @@ class SyncSettings(context: Context) {
         const val KEY_BRANCH = "branch"
         const val KEY_JOURNAL_DIR = "journal_dir"
         const val KEY_DEVICE_ID = "device_id"
+        const val KEY_CONFIG_PULL_AT = "config_pull_at"
     }
 }

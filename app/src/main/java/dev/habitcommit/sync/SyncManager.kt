@@ -108,6 +108,15 @@ class SyncManager(
 
     fun token(): String? = tokenStore.load()
 
+    /** Marks that habits.json was replaced by the repo copy. */
+    fun noteConfigPulled() {
+        prefs.edit()
+            .putString(KEY_MESSAGE, appContext.getString(R.string.config_pulled))
+            .putBoolean(KEY_OK, true)
+            .apply()
+        refresh()
+    }
+
     fun recordSuccess(pendingLeft: Int) {
         prefs.edit()
             .putString(

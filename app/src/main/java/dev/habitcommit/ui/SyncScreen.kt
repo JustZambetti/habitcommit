@@ -190,6 +190,15 @@ fun SyncScreen(
                                             ),
                                             false,
                                         )
+                                        // Bring the repo's habits.json in right away.
+                                        val remote = withContext(Dispatchers.IO) {
+                                            syncManager.downloadConfig()
+                                        }
+                                        remote.onSuccess { text ->
+                                            repository.saveConfig(text).onSuccess {
+                                                onConfigReplaced()
+                                            }
+                                        }
                                     },
                                     onFailure = {
                                         report(

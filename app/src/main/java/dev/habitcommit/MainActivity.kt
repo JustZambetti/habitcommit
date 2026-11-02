@@ -52,8 +52,14 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         resumeTick.value += 1
         WidgetRefreshScheduler.ensureScheduled(this)
+        val app = application as HabitCommitApp
         lifecycleScope.launch {
             refreshAllWidgets(this@MainActivity)
+            // The GitHub repo is the source of truth for habits.json.
+            if (app.pullConfigFromGithub()) {
+                refreshAllWidgets(this@MainActivity)
+                resumeTick.value += 1
+            }
         }
     }
 }
