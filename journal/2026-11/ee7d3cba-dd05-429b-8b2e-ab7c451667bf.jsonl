@@ -25,3 +25,4 @@
 {"v":1,"type":"checkin","id":"e00f0d30-73c2-4878-959c-966258e3ab62","check":"reading","date":"2026-11-02","value":1,"at":"2026-11-02T13:57:16.946863Z","tz":"Europe\/Rome","device":"ee7d3cba-dd05-429b-8b2e-ab7c451667bf"}
 {"v":1,"type":"checkin","id":"eece97ad-2274-45c7-a9ff-1a96369025f9","check":"reading","date":"2026-11-02","value":0,"at":"2026-11-02T13:57:17.652344Z","tz":"Europe\/Rome","device":"ee7d3cba-dd05-429b-8b2e-ab7c451667bf"}
 {"v":1,"type":"checkin","id":"35b7ffdc-90e4-47f1-8d42-bc28529deb13","check":"client-call","date":"2026-11-02","value":1,"at":"2026-11-02T13:57:17.911425Z","tz":"Europe\/Rome","device":"ee7d3cba-dd05-429b-8b2e-ab7c451667bf"}
+{"v":1,"type":"checkin","id":"bc07732e-62b2-4765-9fd9-d5af6128af1a","check":"deep-work","date":"2026-11-02","value":1,"at":"2026-11-02T13:57:18.541458Z","tz":"Europe\/Rome","device":"ee7d3cba-dd05-429b-8b2e-ab7c451667bf"}
