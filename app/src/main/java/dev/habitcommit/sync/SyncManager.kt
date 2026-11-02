@@ -43,7 +43,7 @@ class SyncManager(
         val line = RemoteJournal.eventLine(event, settings.deviceId)
         outbox.add(event.id, event.localDate, line)
         refresh()
-        if (isConfigured()) GithubSyncScheduler.request(appContext)
+        // Values wait for the daily flush; "Sync now" still forces a run.
     }
 
     fun saveConnection(target: GithubTarget, token: String?): Result<Unit> {
@@ -65,6 +65,8 @@ class SyncManager(
                 .remove(KEY_SYNC_AT)
                 .apply()
             refresh()
+            GithubSyncScheduler.ensureDaily(appContext)
+            // Flush anything queued while disconnected, then leave the rest to the daily run.
             GithubSyncScheduler.request(appContext)
             Result.success(Unit)
         } catch (e: Exception) {
@@ -79,6 +81,7 @@ class SyncManager(
     fun disconnect() {
         tokenStore.clear()
         settings.clearTarget()
+        GithubSyncScheduler.cancelDaily(appContext)
         prefs.edit()
             .putString(KEY_MESSAGE, appContext.getString(R.string.sync_disconnected))
             .putBoolean(KEY_OK, true)

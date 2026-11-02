@@ -70,6 +70,8 @@ class HabitCommitApp : Application() {
         // is SharedPreferences only, so the no-sync tap path stays untouched.
         if (syncSettings.target() != null) {
             WorkBootstrap.ensure(this)
+            // Also heals installs that connected before daily scheduling existed.
+            GithubSyncScheduler.ensureDaily(this)
         }
     }
 
@@ -83,9 +85,8 @@ class HabitCommitApp : Application() {
             Log.w("HabitCommitSync", "outbox add failed: ${e.javaClass.simpleName}")
             return
         }
-        if (isSyncConfigured()) {
-            syncScope.launch { GithubSyncScheduler.request(this@HabitCommitApp) }
-        }
+        // Queued values are committed together by the daily sync run, so the
+        // tap path never touches WorkManager.
     }
 
     fun isSyncConfigured(): Boolean =

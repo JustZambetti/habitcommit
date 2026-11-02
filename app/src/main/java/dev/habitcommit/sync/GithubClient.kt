@@ -21,9 +21,9 @@ data class RepoSummary(
 /**
  * Minimal client for the GitHub Contents and repository APIs.
  *
- * The host is hardcoded: the PAT can never be sent to another server. Each
- * recorded value is a separate commit that appends one line to a per-install,
- * per-month JSONL file, so two devices never rewrite the same file.
+ * The host is hardcoded: the PAT can never be sent to another server. Pending
+ * values are batched into one commit per per-install, per-month JSONL file on
+ * each sync run, so two devices never rewrite the same file.
  */
 class GithubClient(
     private val resources: Resources,
@@ -63,15 +63,29 @@ class GithubClient(
         Result.failure(GithubException(networkError(e), retryable = true))
     }
 
-    /** Appends [event] once. Retries read-modify-write on a concurrent update. */
-    fun appendEvent(event: PendingEvent, deviceId: String): Result<Unit> {
-        val path = target.journalPath(event.localDate, deviceId)
-        val checkId = try {
-            JSONObject(event.line).optString("check", "value")
-        } catch (e: Exception) {
-            "value"
+    /**
+     * Appends [events] once, grouped by journal file so a sync run leaves at
+     * most one commit per month file. Retries read-modify-write on a concurrent
+     * update.
+     */
+    fun appendEvents(events: List<PendingEvent>, deviceId: String): Result<Unit> {
+        val byPath = events.groupBy { target.journalPath(it.localDate, deviceId) }
+        for ((path, group) in byPath) {
+            val result = appendBatch(path, group)
+            if (result.isFailure) return result
         }
-        val message = "habitcommit: ${safeCheckId(checkId)} on ${event.localDate}"
+        return Result.success(Unit)
+    }
+
+    private fun appendBatch(path: String, events: List<PendingEvent>): Result<Unit> {
+        val dates = events.map { it.localDate }.distinct().sorted()
+        val range = if (dates.size == 1) {
+            dates.first().toString()
+        } else {
+            "${dates.first()}..${dates.last()}"
+        }
+        // Notes are never part of a commit message: only the date range and size.
+        val message = "habitcommit: journal $range (${events.size} entries)"
 
         var attempt = 0
         while (attempt < MAX_CONFLICT_RETRIES) {
@@ -80,10 +94,13 @@ class GithubClient(
                 is ReadResult.Ok -> read.file
                 is ReadResult.Failed -> return Result.failure(read.error)
             }
-            if (existing != null && RemoteJournal.containsEvent(existing.text, event.id)) {
-                return Result.success(Unit)
+            val missing = events.filterNot { event ->
+                existing != null && RemoteJournal.containsEvent(existing.text, event.id)
             }
-            val updated = RemoteJournal.append(existing?.text ?: "", event.line)
+            if (missing.isEmpty()) return Result.success(Unit)
+            val updated = missing.fold(existing?.text ?: "") { text, event ->
+                RemoteJournal.append(text, event.line)
+            }
             val write = putFile(path, updated, existing?.sha, message)
             when {
                 write.isSuccess -> return Result.success(Unit)
@@ -202,9 +219,6 @@ class GithubClient(
         URLEncoder.encode(value, "UTF-8").replace("+", "%20")
 
     private fun segments(path: String): String = GithubTarget.pathSegments(path).joinToString("/") { encode(it) }
-
-    private fun safeCheckId(value: String): String =
-        value.replace(Regex("[^a-z0-9-]"), "").take(40).ifEmpty { "value" }
 
     private class ConflictException(message: String) : Exception(message)
 
