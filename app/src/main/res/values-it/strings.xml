@@ -32,19 +32,17 @@
     <string name="today_title">Oggi</string>
     <string name="loading_plan">Carico il piano di oggi…</string>
     <string name="history_title">Storico</string>
-    <string name="config_title">Config</string>
 
     <string name="demo_badge">DEMO</string>
     <string name="demo_local">Dati di esempio locali</string>
     <string name="action_clear">Azzera</string>
     <string name="config_invalid_title">La config non è valida</string>
-    <string name="action_open_habits_json">Apri habits.json</string>
+    <string name="config_invalid_hint">Correggi habits.json nel repo GitHub: l’app lo scarica automaticamente.</string>
 
     <string name="plan_today">PIANO DI OGGI</string>
     <string name="no_metrics_for_plan">Nessuna metrica per questo piano.</string>
     <string name="saved_locally">salvato in locale ✓</string>
     <string name="tomorrow">DOMANI</string>
-    <string name="action_edit_habits">Modifica habits.json</string>
 
     <string name="source_date_override">OVERRIDE DI OGGI</string>
     <string name="source_weekday">PIANO DEL GIORNO · HABITS.JSON</string>
@@ -74,22 +72,14 @@
 
     <string name="config_card_subtitle">Metriche, piani e schedule</string>
     <string name="config_card_desc">Il piano di oggi viene risolto da questo file. Con la sync attiva ogni valore registrato viene accodato e poi committato sul tuo repo GitHub.</string>
-    <string name="action_edit_config">Modifica config</string>
     <string name="action_reload_demo">Ricarica demo</string>
     <string name="action_clear_metrics">Azzera tutte le metriche locali</string>
-    <string name="footer">v0.1 smoke · local-first · nessun dato lascia il telefono</string>
 
-    <string name="config_screen_subtitle">Configurazione locale · validazione allo schema 1</string>
     <string name="close">Chiudi</string>
-    <string name="config_hint">Incolla qui il contenuto del file. Controllo subito ID, metriche, piani, schedule e override.</string>
-    <string name="json">JSON</string>
-    <string name="action_restore">Ripristina</string>
-    <string name="action_save_reload">Salva e ricarica</string>
     <string name="invalid_configuration">Configurazione non valida</string>
 
     <!-- Settings -->
     <string name="settings_title">Impostazioni</string>
-    <string name="settings_plan">Piano</string>
     <string name="settings_widget_sub">Formati e aggiunta alla home</string>
     <string name="settings_data">Dati</string>
     <string name="settings_data_sub">Demo e cancellazione locale</string>
@@ -106,12 +96,9 @@
     <string name="data_seed_body">I valori locali attuali vengono sostituiti da un nuovo esempio. Il piano resta lo stesso.</string>
     <string name="data_clear_title">Azzerare tutti i valori registrati?</string>
     <string name="data_clear_body">Ogni valore registrato su questo dispositivo viene eliminato. Piano e sync restano invariati.</string>
-    <string name="discard_title">Scartare le modifiche?</string>
-    <string name="discard_body">Le modifiche a habits.json andranno perse.</string>
-    <string name="action_discard">Scarta</string>
-    <string name="action_keep_editing">Continua a modificare</string>
-    <string name="action_save">Salva</string>
     <string name="about_version">Versione %1$s</string>
+    <string name="about_author">Autore: Giorgio Zambetti</string>
+    <string name="about_github">GitHub: JustZambetti/habitcommit</string>
     <string name="about_license">Open source · Apache-2.0. Nessuna telemetria: l’unico traffico di rete è la sync GitHub con il tuo token.</string>
 
     <!-- History -->
@@ -133,6 +120,7 @@
     <string name="action_show">Mostra</string>
     <string name="action_hide">Nascondi</string>
     <string name="pat_requirement">Il PAT deve avere Contents: write per committare gli aggiornamenti.</string>
+    <string name="pat_saved">PAT salvato e nascosto su questo dispositivo (cifrato). Lascia vuoto per mantenerlo.</string>
     <string name="repo_section">Repository</string>
     <string name="repo_owner">Owner</string>
     <string name="repo_name">Nome</string>

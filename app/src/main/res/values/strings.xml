@@ -32,19 +32,17 @@
     <string name="today_title">Today</string>
     <string name="loading_plan">Loading today\'s plan…</string>
     <string name="history_title">History</string>
-    <string name="config_title">Config</string>
 
     <string name="demo_badge">DEMO</string>
     <string name="demo_local">Local sample data</string>
     <string name="action_clear">Clear</string>
     <string name="config_invalid_title">The configuration isn\'t valid</string>
-    <string name="action_open_habits_json">Open habits.json</string>
+    <string name="config_invalid_hint">Fix habits.json in your GitHub repo: the app downloads it automatically.</string>
 
     <string name="plan_today">TODAY\'S PLAN</string>
     <string name="no_metrics_for_plan">No metrics for this plan.</string>
     <string name="saved_locally">saved locally ✓</string>
     <string name="tomorrow">TOMORROW</string>
-    <string name="action_edit_habits">Edit habits.json</string>
 
     <string name="source_date_override">TODAY\'S OVERRIDE</string>
     <string name="source_weekday">TODAY\'S PLAN · HABITS.JSON</string>
@@ -74,22 +72,14 @@
 
     <string name="config_card_subtitle">Metrics, plans and schedule</string>
     <string name="config_card_desc">Today\'s plan is resolved from this file. With sync on, every recorded value is queued and committed to your GitHub repo.</string>
-    <string name="action_edit_config">Edit config</string>
     <string name="action_reload_demo">Reload demo</string>
     <string name="action_clear_metrics">Clear all local metrics</string>
-    <string name="footer">v0.1 smoke · local-first · no data leaves your phone</string>
 
-    <string name="config_screen_subtitle">Local configuration · schema 1 validation</string>
     <string name="close">Close</string>
-    <string name="config_hint">Paste the file contents here. IDs, metrics, plans, schedule and overrides are checked immediately.</string>
-    <string name="json">JSON</string>
-    <string name="action_restore">Restore</string>
-    <string name="action_save_reload">Save and reload</string>
     <string name="invalid_configuration">Invalid configuration</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_plan">Plan</string>
     <string name="settings_widget_sub">Sizes and pin to home screen</string>
     <string name="settings_data">Data</string>
     <string name="settings_data_sub">Demo values and local clearing</string>
@@ -106,12 +96,9 @@
     <string name="data_seed_body">Current local values are replaced by a fresh sample. The plan stays the same.</string>
     <string name="data_clear_title">Clear all recorded values?</string>
     <string name="data_clear_body">Every value recorded on this device is deleted. The plan and sync settings are kept.</string>
-    <string name="discard_title">Discard changes?</string>
-    <string name="discard_body">Your edits to habits.json will be lost.</string>
-    <string name="action_discard">Discard</string>
-    <string name="action_keep_editing">Keep editing</string>
-    <string name="action_save">Save</string>
     <string name="about_version">Version %1$s</string>
+    <string name="about_author">Author: Giorgio Zambetti</string>
+    <string name="about_github">GitHub: JustZambetti/habitcommit</string>
     <string name="about_license">Open source · Apache-2.0. No telemetry: the only network traffic is GitHub sync with your own token.</string>
 
     <!-- History -->
@@ -133,6 +120,7 @@
     <string name="action_show">Show</string>
     <string name="action_hide">Hide</string>
     <string name="pat_requirement">The PAT needs Contents: write to commit updates.</string>
+    <string name="pat_saved">PAT saved and hidden on this device (encrypted). Leave empty to keep it.</string>
     <string name="repo_section">Repository</string>
     <string name="repo_owner">Owner</string>
     <string name="repo_name">Name</string>

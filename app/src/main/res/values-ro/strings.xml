@@ -33,19 +33,17 @@
     <string name="today_title">Astăzi</string>
     <string name="loading_plan">Încarc planul de azi…</string>
     <string name="history_title">Istoric</string>
-    <string name="config_title">Config</string>
 
     <string name="demo_badge">DEMO</string>
     <string name="demo_local">Date demo locale</string>
     <string name="action_clear">Șterge</string>
     <string name="config_invalid_title">Configurația nu este validă</string>
-    <string name="action_open_habits_json">Deschide habits.json</string>
+    <string name="config_invalid_hint">Corectează habits.json în repo-ul GitHub: aplicația îl descarcă automat.</string>
 
     <string name="plan_today">PLANUL DE AZI</string>
     <string name="no_metrics_for_plan">Nicio metrică pentru acest plan.</string>
     <string name="saved_locally">salvat local ✓</string>
     <string name="tomorrow">MÂINE</string>
-    <string name="action_edit_habits">Editează habits.json</string>
 
     <string name="source_date_override">SUPRASCRIEREA DE AZI</string>
     <string name="source_weekday">PLANUL ZILEI · HABITS.JSON</string>
@@ -77,22 +75,14 @@
 
     <string name="config_card_subtitle">Metrice, planuri și program</string>
     <string name="config_card_desc">Planul de azi este derivat din acest fișier. Cu sincronizarea activă, fiecare valoare înregistrată este pusă în coadă și trimisă în repo-ul tău GitHub.</string>
-    <string name="action_edit_config">Editează config</string>
     <string name="action_reload_demo">Reîncarcă demo</string>
     <string name="action_clear_metrics">Șterge toate metricele locale</string>
-    <string name="footer">v0.1 smoke · local-first · niciun dat nu părăsește telefonul</string>
 
-    <string name="config_screen_subtitle">Configurare locală · validare schema 1</string>
     <string name="close">Închide</string>
-    <string name="config_hint">Lipește aici conținutul fișierului. Verific imediat ID-urile, metricele, planurile, programul și suprascrierile.</string>
-    <string name="json">JSON</string>
-    <string name="action_restore">Restaurează</string>
-    <string name="action_save_reload">Salvează și reîncarcă</string>
     <string name="invalid_configuration">Configurație nevalidă</string>
 
     <!-- Settings -->
     <string name="settings_title">Setări</string>
-    <string name="settings_plan">Plan</string>
     <string name="settings_widget_sub">Formate și adăugare pe ecran</string>
     <string name="settings_data">Date</string>
     <string name="settings_data_sub">Demo și ștergere locală</string>
@@ -109,12 +99,9 @@
     <string name="data_seed_body">Valorile locale actuale sunt înlocuite cu un exemplu nou. Planul rămâne același.</string>
     <string name="data_clear_title">Ștergi toate valorile înregistrate?</string>
     <string name="data_clear_body">Fiecare valoare înregistrată pe acest dispozitiv este ștearsă. Planul și sincronizarea rămân.</string>
-    <string name="discard_title">Renunți la modificări?</string>
-    <string name="discard_body">Modificările la habits.json vor fi pierdute.</string>
-    <string name="action_discard">Renunță</string>
-    <string name="action_keep_editing">Continuă editarea</string>
-    <string name="action_save">Salvează</string>
     <string name="about_version">Versiunea %1$s</string>
+    <string name="about_author">Autor: Giorgio Zambetti</string>
+    <string name="about_github">GitHub: JustZambetti/habitcommit</string>
     <string name="about_license">Open source · Apache-2.0. Fără telemetrie: singurul trafic de rețea este sincronizarea GitHub cu tokenul tău.</string>
 
     <!-- History -->
@@ -136,6 +123,7 @@
     <string name="action_show">Arată</string>
     <string name="action_hide">Ascunde</string>
     <string name="pat_requirement">PAT-ul are nevoie de Contents: write pentru a trimite actualizările.</string>
+    <string name="pat_saved">PAT salvat și ascuns pe acest dispozitiv (criptat). Lasă gol pentru a-l păstra.</string>
     <string name="repo_section">Repository</string>
     <string name="repo_owner">Owner</string>
     <string name="repo_name">Nume</string>

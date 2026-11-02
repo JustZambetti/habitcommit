@@ -260,15 +260,32 @@ fun SyncScreen(
             singleLine = true,
             visualTransformation = if (showToken) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            trailingIcon = {
-                TextButton(onClick = { showToken = !showToken }) {
+            trailingIcon = if (token.isNotEmpty()) {
+                {
+                    TextButton(onClick = { showToken = !showToken }) {
+                        Text(
+                            text = stringResource(
+                                if (showToken) R.string.action_hide else R.string.action_show,
+                            ),
+                            fontSize = 11.sp,
+                        )
+                    }
+                }
+            } else {
+                null
+            },
+            // The stored token is never shown again: say so, and let an empty
+            // field mean "keep the saved token".
+            supportingText = if (status.configured) {
+                {
                     Text(
-                        text = stringResource(
-                            if (showToken) R.string.action_hide else R.string.action_show,
-                        ),
-                        fontSize = 11.sp,
+                        text = stringResource(R.string.pat_saved),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 10.sp,
                     )
                 }
+            } else {
+                null
             },
         )
 

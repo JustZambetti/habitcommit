@@ -15,7 +15,7 @@ Source: [github.com/JustZambetti/habitcommit](https://github.com/JustZambetti/ha
 - **Streak + 14-day heatmap** so progress is visible without opening the app.
 - **Material 3 visual language** in the app and the widget: pill-shaped filled/tonal buttons, standard 18dp checkboxes (outlined when empty, filled when done) and 8dp chips, drawn with native `RemoteViews` from the same palette.
 - **Taps repaint in place.** A widget tap is handled by a plain `BroadcastReceiver` that writes the journal and applies the new `RemoteViews` before it returns — no Glance session and no WorkManager in the tap path. Measured on an emulator: ~0.9 s for the first tap after the process was killed, ~35 ms when the process is warm (this used to be 3.3 s and 0.6 s).
-- **A small companion app** to review today, check past metrics, edit `habits.json` with validation, clear data and seed demo data. A single **Settings** hub collects the plan editor, sync, widget sizes and data tools, so the Today screen stays a place to record values. The **Storico** page shows one strip per metric for the last 14, 30 or 90 days plus a per-day breakdown of the last week; empty cells mean the metric was not in that day's plan. Plans are changed only in `habits.json` — there is no per-day plan picker, because once sync lands the config lives in your GitHub repo.
+- **A small companion app** to review today, check past metrics, clear data and seed demo data. A single **Settings** hub collects sync, widget sizes, data tools and app info, so the Today screen stays a place to record values. `habits.json` is edited in the GitHub repo, not in the app: the app validates it on download and shows an error card if the file is broken. The **Storico** page shows one strip per metric for the last 14, 30 or 90 days plus a per-day breakdown of the last week; empty cells mean the metric was not in that day's plan. Plans are changed only in `habits.json` — there is no per-day plan picker, because once sync lands the config lives in your GitHub repo.
 - **Local first.** Events are appended to a local JSONL journal before anything else happens; widgets re-render immediately.
 - **Optional GitHub sync.** Connect a private repo with a fine-grained PAT (only **Contents: Read and write** + **Metadata: Read**). Recorded values wait in a durable local outbox and are flushed **once a day** (around 22:00 local time, when the phone is online) as a **single commit per journal file**, appending one line per value to `journal/YYYY-MM/<device>.jsonl`; **Sync now** forces an immediate run. Taps never wait for the network, and retries deduplicate by event id. `habits.json` is **pulled automatically from the repo**: on every app resume and at the start of each sync run (throttled to one attempt every 5 minutes) the app downloads it, validates it and replaces the local copy when it differs, then refreshes the widgets. The repo is the source of truth for plans; a manual **Download habits.json** button remains in the sync screen. The setup screen asks **only for the PAT**: as soon as a plausible token is entered it looks up the visible repositories and proposes one (with a picker when the token sees several; a PAT scoped to one repo lists only that one). Owner and name are read-only; branch and HabitCommit path are editable and prefill with the repository default and `journal`.
 - **English, Italian and Romanian.** Every screen, widget label and sync error follows the device language (`values/`, `values-it/`, `values-ro/`); the sample `habits.json` is seeded in the same language.
@@ -101,7 +101,7 @@ app/src/main/java/dev/habitcommit/
 ├── HabitCommitApp.kt          # manual DI container
 ├── data/                      # config parser, plan resolver, repository, event log, demo seeder
 ├── sync/                      # GitHub client, encrypted token, outbox, WorkManager sync
-├── ui/                        # Compose app: today, config editor, sync setup, heatmap
+├── ui/                        # Compose app: today, history, settings, sync setup, heatmap
 └── widget/                    # native RemoteViews widgets (4×4, 4×2, 2×4, 2×2), receivers, midnight alarm
 app/src/test/                  # JVM unit tests
 design/                        # mockups (A–J + combined) and screenshot scripts
@@ -111,7 +111,7 @@ design/                        # mockups (A–J + combined) and screenshot scrip
 
 | Milestone | Scope |
 |---|---|
-| **Now** | Local smoke prototype + optional GitHub sync: widgets, dynamic plans, config editor, outbox, tests |
+| **Now** | Local smoke prototype + optional GitHub sync: widgets, dynamic plans, outbox, tests |
 | Next | Validation with 8–12 developers (M0 gate); sync hardening (multi-device merge, retry UX) |
 | Then | Repo template + dashboard Action, config round-trip in both directions |
 | Later | F-Droid release, notes, history views, possible iOS |

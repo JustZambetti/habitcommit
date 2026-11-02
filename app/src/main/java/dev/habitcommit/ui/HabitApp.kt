@@ -28,13 +28,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,9 +49,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -90,7 +88,6 @@ fun HabitApp(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var today by remember { mutableStateOf<TodayState?>(null) }
-    var showConfig by remember { mutableStateOf(false) }
     var showSync by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
@@ -116,9 +113,11 @@ fun HabitApp(
         today = withContext(Dispatchers.IO) { repository.today() }
     }
 
+    // The widget's secondary button now opens Settings; plans are edited in the
+    // GitHub repo, not in the app.
     LaunchedEffect(route) {
         if (route == "habitcommit://config") {
-            showConfig = true
+            showSettings = true
             onRouteConsumed()
         }
     }
@@ -157,13 +156,12 @@ fun HabitApp(
 
     // System back closes the top-most overlay instead of leaving the app.
     BackHandler(
-        enabled = showSync || showHistory || showConfig || showWidgets ||
+        enabled = showSync || showHistory || showWidgets ||
             showData || showInfo || showSettings,
     ) {
         when {
             showSync -> showSync = false
             showHistory -> showHistory = false
-            showConfig -> showConfig = false
             showWidgets -> showWidgets = false
             showData -> showData = false
             showInfo -> showInfo = false
@@ -190,19 +188,6 @@ fun HabitApp(
                 repository = repository,
                 onClose = { showHistory = false },
             )
-        } else if (showConfig) {
-            ConfigScreen(
-                initialText = remember(showConfig) { repository.configText() },
-                onClose = { showConfig = false },
-                onSave = { text ->
-                    val result = repository.saveConfig(text)
-                    if (result.isSuccess) {
-                        showConfig = false
-                        reload()
-                    }
-                    result
-                },
-            )
         } else if (showWidgets) {
             WidgetScreen(context = context, onClose = { showWidgets = false })
         } else if (showData) {
@@ -222,7 +207,6 @@ fun HabitApp(
         } else if (showSettings) {
             SettingsScreen(
                 status = syncStatus,
-                onOpenPlan = { showConfig = true },
                 onOpenSync = { showSync = true },
                 onOpenWidgets = { showWidgets = true },
                 onOpenData = { showData = true },
@@ -258,7 +242,7 @@ fun HabitApp(
 
                 state.configError?.let { error ->
                     Spacer(Modifier.height(12.dp))
-                    ErrorCard(error = error, onOpenConfig = { showConfig = true })
+                    ErrorCard(error = error)
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -370,7 +354,7 @@ private fun DemoBanner(onClear: () -> Unit) {
 }
 
 @Composable
-private fun ErrorCard(error: String, onOpenConfig: () -> Unit) {
+private fun ErrorCard(error: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
@@ -389,9 +373,12 @@ private fun ErrorCard(error: String, onOpenConfig: () -> Unit) {
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 fontSize = 11.sp,
             )
-            TextButton(onClick = onOpenConfig) {
-                Text(stringResource(R.string.action_open_habits_json))
-            }
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(R.string.config_invalid_hint),
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                fontSize = 11.sp,
+            )
         }
     }
 }
@@ -620,7 +607,6 @@ private fun TomorrowRow(state: TodayState) {
 @Composable
 private fun SettingsScreen(
     status: SyncStatus,
-    onOpenPlan: () -> Unit,
     onOpenSync: () -> Unit,
     onOpenWidgets: () -> Unit,
     onOpenData: () -> Unit,
@@ -637,11 +623,6 @@ private fun SettingsScreen(
     ) {
         ScreenHeader(title = stringResource(R.string.settings_title), onClose = onClose)
         Spacer(Modifier.height(14.dp))
-        SettingsRow(
-            title = stringResource(R.string.settings_plan),
-            subtitle = "habits.json",
-            onClick = onOpenPlan,
-        )
         SettingsRow(
             title = stringResource(R.string.sync_card_title),
             subtitle = if (status.configured) {
@@ -883,6 +864,7 @@ private fun DataScreen(
 
 @Composable
 private fun InfoScreen(onClose: () -> Unit) {
+    val uriHandler = LocalUriHandler.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -900,10 +882,19 @@ private fun InfoScreen(onClose: () -> Unit) {
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = stringResource(R.string.footer),
+            text = stringResource(R.string.about_author),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 12.sp,
-            lineHeight = 17.sp,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.about_github),
+            modifier = Modifier
+                .clip(MaterialTheme.shapes.small)
+                .clickable { uriHandler.openUri("https://github.com/JustZambetti/habitcommit") }
+                .padding(vertical = 2.dp),
+            color = MaterialTheme.colorScheme.primary,
+            fontSize = 12.sp,
         )
         Spacer(Modifier.height(8.dp))
         Text(
@@ -990,129 +981,6 @@ private fun pinWidget(context: Context, receiver: Class<*>) {
             context.getString(R.string.widget_pin_unsupported),
             Toast.LENGTH_LONG,
         ).show()
-    }
-}
-
-@Composable
-private fun ConfigScreen(
-    initialText: String,
-    onClose: () -> Unit,
-    onSave: (String) -> Result<Unit>,
-) {
-    var text by remember(initialText) { mutableStateOf(initialText) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var confirmDiscard by remember { mutableStateOf(false) }
-    val invalidConfiguration = stringResource(R.string.invalid_configuration)
-    val dirty = text != initialText
-
-    fun requestClose() {
-        if (dirty) confirmDiscard = true else onClose()
-    }
-
-    // Unsaved edits are guarded even when the system back button is used.
-    BackHandler { requestClose() }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(18.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "habits.json",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                Text(
-                    text = stringResource(R.string.config_screen_subtitle),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp,
-                )
-            }
-            TextButton(onClick = { requestClose() }) {
-                Text(stringResource(R.string.close))
-            }
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.config_hint),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 11.sp,
-            lineHeight = 16.sp,
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = text,
-            onValueChange = {
-                text = it
-                error = null
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            textStyle = androidx.compose.ui.text.TextStyle(
-                fontFamily = FontFamily.Monospace,
-                fontSize = 11.sp,
-            ),
-            isError = error != null,
-            label = { Text(stringResource(R.string.json)) },
-        )
-        error?.let {
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = it,
-                color = MaterialTheme.colorScheme.error,
-                fontSize = 11.sp,
-            )
-        }
-        Spacer(Modifier.height(10.dp))
-        Row {
-            OutlinedButton(
-                onClick = {
-                    text = initialText
-                    error = null
-                },
-                modifier = Modifier.weight(4f),
-            ) {
-                Text(stringResource(R.string.action_discard))
-            }
-            Spacer(Modifier.width(8.dp))
-            Button(
-                onClick = {
-                    val result = onSave(text)
-                    result.onFailure {
-                        error = it.message ?: invalidConfiguration
-                    }
-                },
-                modifier = Modifier.weight(6f),
-            ) {
-                Text(stringResource(R.string.action_save))
-            }
-        }
-    }
-
-    if (confirmDiscard) {
-        AlertDialog(
-            onDismissRequest = { confirmDiscard = false },
-            title = { Text(stringResource(R.string.discard_title)) },
-            text = { Text(stringResource(R.string.discard_body)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        confirmDiscard = false
-                        onClose()
-                    },
-                ) { Text(stringResource(R.string.action_discard)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmDiscard = false }) {
-                    Text(stringResource(R.string.action_keep_editing))
-                }
-            },
-        )
     }
 }
 
