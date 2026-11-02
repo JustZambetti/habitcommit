@@ -43,3 +43,4 @@
 {"v":1,"type":"checkin","id":"7843be26-3304-461a-b41c-51ee0fe30375","check":"reading","date":"2026-11-02","value":0,"at":"2026-11-02T13:57:29.729202Z","tz":"Europe\/Rome","device":"ee7d3cba-dd05-429b-8b2e-ab7c451667bf"}
 {"v":1,"type":"checkin","id":"849377b9-94fc-424e-898c-aafab8f9b574","check":"review-pr","date":"2026-11-02","value":0,"at":"2026-11-02T13:57:30.055352Z","tz":"Europe\/Rome","device":"ee7d3cba-dd05-429b-8b2e-ab7c451667bf"}
 {"v":1,"type":"checkin","id":"1e5bbffc-f994-4e66-bb61-795b74a3c32b","check":"reading","date":"2026-11-02","value":1,"at":"2026-11-02T14:42:58.432411Z","tz":"Europe\/Rome","device":"ee7d3cba-dd05-429b-8b2e-ab7c451667bf"}
+{"v":1,"type":"checkin","id":"ef75cc0d-04c6-4ca8-8137-f6aa63f85918","check":"client-call","date":"2026-11-02","value":1,"at":"2026-11-02T14:42:59.084184Z","tz":"Europe\/Rome","device":"ee7d3cba-dd05-429b-8b2e-ab7c451667bf"}
