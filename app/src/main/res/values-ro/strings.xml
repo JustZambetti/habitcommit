@@ -90,9 +90,35 @@
     <string name="action_save_reload">Salvează și reîncarcă</string>
     <string name="invalid_configuration">Configurație nevalidă</string>
 
+    <!-- Settings -->
+    <string name="settings_title">Setări</string>
+    <string name="settings_plan">Plan</string>
+    <string name="settings_widget_sub">Formate și adăugare pe ecran</string>
+    <string name="settings_data">Date</string>
+    <string name="settings_data_sub">Demo și ștergere locală</string>
+    <string name="settings_about">Despre</string>
+    <string name="settings_about_sub">Versiune și confidențialitate</string>
+    <string name="widget_format_plan">4×4 · Plan</string>
+    <string name="widget_format_compact">4×2 · Compact</string>
+    <string name="widget_format_vertical">2×4 · Vertical</string>
+    <string name="widget_format_focus">2×2 · Focus</string>
+    <string name="action_add">Adaugă</string>
+    <string name="demo_clear_title">Ștergi datele demo?</string>
+    <string name="demo_clear_body">Valorile demo vor fi șterse. Poți începe să înregistrezi de la zero.</string>
+    <string name="data_seed_title">Reîncarci datele demo?</string>
+    <string name="data_seed_body">Valorile locale actuale sunt înlocuite cu un exemplu nou. Planul rămâne același.</string>
+    <string name="data_clear_title">Ștergi toate valorile înregistrate?</string>
+    <string name="data_clear_body">Fiecare valoare înregistrată pe acest dispozitiv este ștearsă. Planul și sincronizarea rămân.</string>
+    <string name="discard_title">Renunți la modificări?</string>
+    <string name="discard_body">Modificările la habits.json vor fi pierdute.</string>
+    <string name="action_discard">Renunță</string>
+    <string name="action_keep_editing">Continuă editarea</string>
+    <string name="action_save">Salvează</string>
+    <string name="about_version">Versiunea %1$s</string>
+    <string name="about_license">Open source · Apache-2.0. Fără telemetrie: singurul trafic de rețea este sincronizarea GitHub cu tokenul tău.</string>
+
     <!-- History -->
-    <string name="history_kicker">ISTORIC</string>
-    <string name="history_heading">Metrice trecute</string>
+    <string name="history_heading">Istoric</string>
     <string name="history_range">Ultimele %1$d zile · %2$s</string>
     <string name="range_chip">%1$d z</string>
     <string name="history_loading">Încarc istoricul…</string>

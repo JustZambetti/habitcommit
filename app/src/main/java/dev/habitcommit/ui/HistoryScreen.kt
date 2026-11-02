@@ -77,13 +77,6 @@ fun HistoryScreen(repository: HabitRepository, onClose: () -> Unit) {
         Row(verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.history_kicker),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 10.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                    letterSpacing = 2.sp,
-                )
-                Text(
                     text = stringResource(R.string.history_heading),
                     fontSize = 30.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
@@ -193,7 +186,7 @@ private fun MetricHistoryCard(metric: HistoryMetric, state: HistoryState) {
                             stringResource(
                                 R.string.history_metric_days,
                                 metric.activeDays,
-                                metric.plannedDays,
+                                metric.values.size,
                             ),
                         )
                         metric.average?.let {

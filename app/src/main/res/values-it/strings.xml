@@ -87,9 +87,35 @@
     <string name="action_save_reload">Salva e ricarica</string>
     <string name="invalid_configuration">Configurazione non valida</string>
 
+    <!-- Settings -->
+    <string name="settings_title">Impostazioni</string>
+    <string name="settings_plan">Piano</string>
+    <string name="settings_widget_sub">Formati e aggiunta alla home</string>
+    <string name="settings_data">Dati</string>
+    <string name="settings_data_sub">Demo e cancellazione locale</string>
+    <string name="settings_about">Informazioni</string>
+    <string name="settings_about_sub">Versione e privacy</string>
+    <string name="widget_format_plan">4×4 · Piano</string>
+    <string name="widget_format_compact">4×2 · Compatto</string>
+    <string name="widget_format_vertical">2×4 · Verticale</string>
+    <string name="widget_format_focus">2×2 · Focus</string>
+    <string name="action_add">Aggiungi</string>
+    <string name="demo_clear_title">Azzerare i dati demo?</string>
+    <string name="demo_clear_body">I valori di esempio verranno eliminati. Potrai ricominciare a registrare da zero.</string>
+    <string name="data_seed_title">Ricaricare i dati demo?</string>
+    <string name="data_seed_body">I valori locali attuali vengono sostituiti da un nuovo esempio. Il piano resta lo stesso.</string>
+    <string name="data_clear_title">Azzerare tutti i valori registrati?</string>
+    <string name="data_clear_body">Ogni valore registrato su questo dispositivo viene eliminato. Piano e sync restano invariati.</string>
+    <string name="discard_title">Scartare le modifiche?</string>
+    <string name="discard_body">Le modifiche a habits.json andranno perse.</string>
+    <string name="action_discard">Scarta</string>
+    <string name="action_keep_editing">Continua a modificare</string>
+    <string name="action_save">Salva</string>
+    <string name="about_version">Versione %1$s</string>
+    <string name="about_license">Open source · Apache-2.0. Nessuna telemetria: l’unico traffico di rete è la sync GitHub con il tuo token.</string>
+
     <!-- History -->
-    <string name="history_kicker">STORICO</string>
-    <string name="history_heading">Metriche passate</string>
+    <string name="history_heading">Storico</string>
     <string name="history_range">Ultimi %1$d giorni · %2$s</string>
     <string name="range_chip">%1$d g</string>
     <string name="history_loading">Carico lo storico…</string>

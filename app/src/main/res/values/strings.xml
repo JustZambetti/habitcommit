@@ -87,9 +87,35 @@
     <string name="action_save_reload">Save and reload</string>
     <string name="invalid_configuration">Invalid configuration</string>
 
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_plan">Plan</string>
+    <string name="settings_widget_sub">Sizes and pin to home screen</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_data_sub">Demo values and local clearing</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_sub">Version and privacy</string>
+    <string name="widget_format_plan">4×4 · Plan</string>
+    <string name="widget_format_compact">4×2 · Compact</string>
+    <string name="widget_format_vertical">2×4 · Vertical</string>
+    <string name="widget_format_focus">2×2 · Focus</string>
+    <string name="action_add">Add</string>
+    <string name="demo_clear_title">Clear demo data?</string>
+    <string name="demo_clear_body">The sample values will be deleted. You can start recording from scratch.</string>
+    <string name="data_seed_title">Reload demo data?</string>
+    <string name="data_seed_body">Current local values are replaced by a fresh sample. The plan stays the same.</string>
+    <string name="data_clear_title">Clear all recorded values?</string>
+    <string name="data_clear_body">Every value recorded on this device is deleted. The plan and sync settings are kept.</string>
+    <string name="discard_title">Discard changes?</string>
+    <string name="discard_body">Your edits to habits.json will be lost.</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_keep_editing">Keep editing</string>
+    <string name="action_save">Save</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_license">Open source · Apache-2.0. No telemetry: the only network traffic is GitHub sync with your own token.</string>
+
     <!-- History -->
-    <string name="history_kicker">HISTORY</string>
-    <string name="history_heading">Past metrics</string>
+    <string name="history_heading">History</string>
     <string name="history_range">Last %1$d days · %2$s</string>
     <string name="range_chip">%1$d d</string>
     <string name="history_loading">Loading history…</string>

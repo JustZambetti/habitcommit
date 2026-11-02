@@ -4,6 +4,8 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +27,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
@@ -56,13 +59,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.habitcommit.BuildConfig
 import dev.habitcommit.R
 import dev.habitcommit.data.CheckType
 import dev.habitcommit.data.CheckUi
 import dev.habitcommit.data.HabitRepository
-import dev.habitcommit.data.PlanSource
 import dev.habitcommit.data.TodayState
-import dev.habitcommit.sync.GithubSyncScheduler
 import dev.habitcommit.sync.SyncManager
 import dev.habitcommit.sync.SyncStatus
 import dev.habitcommit.widget.Today22Receiver
@@ -76,7 +78,6 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlin.math.roundToInt
 
 @Composable
 fun HabitApp(
@@ -92,6 +93,11 @@ fun HabitApp(
     var showConfig by remember { mutableStateOf(false) }
     var showSync by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
+    var showWidgets by remember { mutableStateOf(false) }
+    var showData by remember { mutableStateOf(false) }
+    var showInfo by remember { mutableStateOf(false) }
+    var confirmDemoClear by remember { mutableStateOf(false) }
     var reloadKey by remember { mutableIntStateOf(0) }
     val syncStatus by syncManager.status.collectAsState()
 
@@ -133,6 +139,38 @@ fun HabitApp(
         }
     }
 
+    fun clearMetrics() {
+        scope.launch {
+            withContext(Dispatchers.IO) { repository.clearEvents() }
+            reloadKey++
+            refreshWidgets()
+        }
+    }
+
+    fun seedDemo() {
+        scope.launch {
+            withContext(Dispatchers.IO) { repository.seedDemo() }
+            reloadKey++
+            refreshWidgets()
+        }
+    }
+
+    // System back closes the top-most overlay instead of leaving the app.
+    BackHandler(
+        enabled = showSync || showHistory || showConfig || showWidgets ||
+            showData || showInfo || showSettings,
+    ) {
+        when {
+            showSync -> showSync = false
+            showHistory -> showHistory = false
+            showConfig -> showConfig = false
+            showWidgets -> showWidgets = false
+            showData -> showData = false
+            showInfo -> showInfo = false
+            showSettings -> showSettings = false
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
@@ -165,6 +203,32 @@ fun HabitApp(
                     result
                 },
             )
+        } else if (showWidgets) {
+            WidgetScreen(context = context, onClose = { showWidgets = false })
+        } else if (showData) {
+            DataScreen(
+                onSeedDemo = {
+                    seedDemo()
+                    showData = false
+                },
+                onClear = {
+                    clearMetrics()
+                    showData = false
+                },
+                onClose = { showData = false },
+            )
+        } else if (showInfo) {
+            InfoScreen(onClose = { showInfo = false })
+        } else if (showSettings) {
+            SettingsScreen(
+                status = syncStatus,
+                onOpenPlan = { showConfig = true },
+                onOpenSync = { showSync = true },
+                onOpenWidgets = { showWidgets = true },
+                onOpenData = { showData = true },
+                onOpenInfo = { showInfo = true },
+                onClose = { showSettings = false },
+            )
         } else {
             val state = today
             if (state == null) {
@@ -185,19 +249,11 @@ fun HabitApp(
                 AppHeader(
                     state = state,
                     onOpenHistory = { showHistory = true },
-                    onOpenConfig = { showConfig = true },
+                    onOpenSettings = { showSettings = true },
                 )
 
                 if (state.demoMode) {
-                    DemoBanner(
-                        onClear = {
-                            scope.launch {
-                                withContext(Dispatchers.IO) { repository.clearEvents() }
-                                reloadKey++
-                                refreshWidgets()
-                            }
-                        },
-                    )
+                    DemoBanner(onClear = { confirmDemoClear = true })
                 }
 
                 state.configError?.let { error ->
@@ -210,46 +266,36 @@ fun HabitApp(
                     state = state,
                     onToggle = ::toggle,
                     onRate = ::rate,
-                    onOpenConfig = { showConfig = true },
                 )
 
-                Spacer(Modifier.height(16.dp))
-                WidgetCard(context)
-
-                Spacer(Modifier.height(16.dp))
-                GitHubCard(
-                    status = syncStatus,
-                    onOpen = { showSync = true },
-                )
-
-                Spacer(Modifier.height(16.dp))
-                LocalConfigCard(
-                    state = state,
-                    onEdit = { showConfig = true },
-                    onSeedDemo = {
-                        scope.launch {
-                            withContext(Dispatchers.IO) { repository.seedDemo() }
-                            reloadKey++
-                            refreshWidgets()
-                        }
-                    },
-                    onClear = {
-                        scope.launch {
-                            withContext(Dispatchers.IO) { repository.clearEvents() }
-                            reloadKey++
-                            refreshWidgets()
-                        }
-                    },
-                )
+                // Sync only surfaces when it needs attention; setup lives in Settings.
+                if (syncStatus.configured && (syncStatus.pending > 0 || !syncStatus.lastOk)) {
+                    Spacer(Modifier.height(12.dp))
+                    SyncStatusRow(status = syncStatus, onOpen = { showSync = true })
+                }
 
                 Spacer(Modifier.height(24.dp))
-                Text(
-                    text = stringResource(R.string.footer),
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 10.sp,
-                )
-                Spacer(Modifier.height(24.dp))
+
+                if (confirmDemoClear) {
+                    AlertDialog(
+                        onDismissRequest = { confirmDemoClear = false },
+                        title = { Text(stringResource(R.string.demo_clear_title)) },
+                        text = { Text(stringResource(R.string.demo_clear_body)) },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    confirmDemoClear = false
+                                    clearMetrics()
+                                },
+                            ) { Text(stringResource(R.string.action_clear)) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { confirmDemoClear = false }) {
+                                Text(stringResource(R.string.action_cancel))
+                            }
+                        },
+                    )
+                }
                 }
             }
         }
@@ -261,20 +307,13 @@ fun HabitApp(
 private fun AppHeader(
     state: TodayState,
     onOpenHistory: () -> Unit,
-    onOpenConfig: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "HABITCOMMIT",
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 2.sp,
-            )
             Text(
                 text = stringResource(R.string.today_title),
                 fontSize = 34.sp,
@@ -290,8 +329,8 @@ private fun AppHeader(
         TextButton(onClick = onOpenHistory) {
             Text(stringResource(R.string.history_title))
         }
-        TextButton(onClick = onOpenConfig) {
-            Text(stringResource(R.string.config_title))
+        TextButton(onClick = onOpenSettings) {
+            Text(stringResource(R.string.settings_title))
         }
     }
 }
@@ -362,7 +401,6 @@ private fun TodayCard(
     state: TodayState,
     onToggle: (String) -> Unit,
     onRate: (String, Int) -> Unit,
-    onOpenConfig: () -> Unit,
 ) {
     Surface(
         modifier = Modifier
@@ -391,22 +429,13 @@ private fun TodayCard(
                         fontWeight = FontWeight.Medium,
                         letterSpacing = (-0.7).sp,
                     )
-                    Spacer(Modifier.height(5.dp))
-                    SourcePill(state)
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "${state.doneCount}/${state.total}",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Medium,
-                        letterSpacing = (-1).sp,
-                    )
-                    Text(
-                        text = "${(state.progress * 100).roundToInt()}%",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp,
-                    )
-                }
+                Text(
+                    text = "${state.doneCount}/${state.total}",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = (-1).sp,
+                )
             }
 
             Spacer(Modifier.height(12.dp))
@@ -462,40 +491,7 @@ private fun TodayCard(
 
             Spacer(Modifier.height(10.dp))
             TomorrowRow(state)
-
-            Spacer(Modifier.height(14.dp))
-            Button(
-                onClick = onOpenConfig,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.action_edit_habits))
-            }
         }
-    }
-}
-
-@Composable
-private fun SourcePill(state: TodayState) {
-    val label = stringResource(
-        when (state.source) {
-            PlanSource.DATE_OVERRIDE -> R.string.source_date_override
-            PlanSource.WEEKDAY -> R.string.source_weekday
-            PlanSource.DEFAULT -> R.string.source_default
-            PlanSource.LOCAL_OVERRIDE -> R.string.source_local_override
-        },
-    )
-    Surface(
-        shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.secondaryContainer,
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            fontSize = 8.sp,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 0.6.sp,
-        )
     }
 }
 
@@ -622,80 +618,365 @@ private fun TomorrowRow(state: TodayState) {
 }
 
 @Composable
-private fun WidgetCard(context: Context) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant,
-        ),
+private fun SettingsScreen(
+    status: SyncStatus,
+    onOpenPlan: () -> Unit,
+    onOpenSync: () -> Unit,
+    onOpenWidgets: () -> Unit,
+    onOpenData: () -> Unit,
+    onOpenInfo: () -> Unit,
+    onClose: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 18.dp),
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(R.string.widget_card_title),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.widget_card_desc),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 12.sp,
-                lineHeight = 17.sp,
-            )
-            Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                WidgetPinButton(
-                    context = context,
-                    label = "4×4",
-                    receiver = Today44Receiver::class.java,
-                    modifier = Modifier.weight(1f),
-                )
-                WidgetPinButton(
-                    context = context,
-                    label = "4×2",
-                    receiver = Today42Receiver::class.java,
-                    modifier = Modifier.weight(1f),
-                )
-                WidgetPinButton(
-                    context = context,
-                    label = "2×4",
-                    receiver = Today24Receiver::class.java,
-                    modifier = Modifier.weight(1f),
-                )
-                WidgetPinButton(
-                    context = context,
-                    label = "2×2",
-                    receiver = Today22Receiver::class.java,
-                    modifier = Modifier.weight(1f),
+        ScreenHeader(title = stringResource(R.string.settings_title), onClose = onClose)
+        Spacer(Modifier.height(14.dp))
+        SettingsRow(
+            title = stringResource(R.string.settings_plan),
+            subtitle = "habits.json",
+            onClick = onOpenPlan,
+        )
+        SettingsRow(
+            title = stringResource(R.string.sync_card_title),
+            subtitle = if (status.configured) {
+                "${status.repoLabel} · ${status.branch}"
+            } else {
+                stringResource(R.string.not_connected)
+            },
+            onClick = onOpenSync,
+        )
+        SettingsRow(
+            title = stringResource(R.string.widget_card_title),
+            subtitle = stringResource(R.string.settings_widget_sub),
+            onClick = onOpenWidgets,
+        )
+        SettingsRow(
+            title = stringResource(R.string.settings_data),
+            subtitle = stringResource(R.string.settings_data_sub),
+            onClick = onOpenData,
+        )
+        SettingsRow(
+            title = stringResource(R.string.settings_about),
+            subtitle = stringResource(R.string.settings_about_sub),
+            onClick = onOpenInfo,
+        )
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun SettingsRow(title: String, subtitle: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    text = subtitle,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.sp,
                 )
             }
-            Spacer(Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.widget_pin_note),
+                text = "›",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 10.sp,
-                lineHeight = 14.sp,
+                fontSize = 22.sp,
             )
         }
     }
 }
 
 @Composable
-private fun WidgetPinButton(
-    context: Context,
-    label: String,
-    receiver: Class<*>,
-    modifier: Modifier = Modifier,
-) {
-    Button(
-        onClick = { pinWidget(context, receiver) },
-        modifier = modifier,
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+private fun WidgetScreen(context: Context, onClose: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 18.dp),
     ) {
-        Text(label, maxLines = 1)
+        ScreenHeader(title = stringResource(R.string.widget_card_title), onClose = onClose)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.widget_card_desc),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+        )
+        Spacer(Modifier.height(14.dp))
+        WidgetFormatRow(
+            title = stringResource(R.string.widget_format_plan),
+            description = stringResource(R.string.widget_44_description),
+            context = context,
+            receiver = Today44Receiver::class.java,
+        )
+        WidgetFormatRow(
+            title = stringResource(R.string.widget_format_compact),
+            description = stringResource(R.string.widget_42_description),
+            context = context,
+            receiver = Today42Receiver::class.java,
+        )
+        WidgetFormatRow(
+            title = stringResource(R.string.widget_format_vertical),
+            description = stringResource(R.string.widget_24_description),
+            context = context,
+            receiver = Today24Receiver::class.java,
+        )
+        WidgetFormatRow(
+            title = stringResource(R.string.widget_format_focus),
+            description = stringResource(R.string.widget_22_description),
+            context = context,
+            receiver = Today22Receiver::class.java,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.widget_pin_note),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 11.sp,
+            lineHeight = 15.sp,
+        )
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun WidgetFormatRow(
+    title: String,
+    description: String,
+    context: Context,
+    receiver: Class<*>,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    text = description,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            OutlinedButton(onClick = { pinWidget(context, receiver) }) {
+                Text(stringResource(R.string.action_add))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DataScreen(
+    onSeedDemo: () -> Unit,
+    onClear: () -> Unit,
+    onClose: () -> Unit,
+) {
+    var confirmSeed by remember { mutableStateOf(false) }
+    var confirmClear by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+    ) {
+        ScreenHeader(title = stringResource(R.string.settings_data), onClose = onClose)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.settings_data_sub),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+        )
+        Spacer(Modifier.height(16.dp))
+        OutlinedButton(
+            onClick = { confirmSeed = true },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.action_reload_demo))
+        }
+        Spacer(Modifier.height(8.dp))
+        TextButton(
+            onClick = { confirmClear = true },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = stringResource(R.string.action_clear_metrics),
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+        Spacer(Modifier.height(24.dp))
+    }
+
+    if (confirmSeed) {
+        AlertDialog(
+            onDismissRequest = { confirmSeed = false },
+            title = { Text(stringResource(R.string.data_seed_title)) },
+            text = { Text(stringResource(R.string.data_seed_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmSeed = false
+                        onSeedDemo()
+                    },
+                ) { Text(stringResource(R.string.action_reload_demo)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmSeed = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    if (confirmClear) {
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            title = { Text(stringResource(R.string.data_clear_title)) },
+            text = { Text(stringResource(R.string.data_clear_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmClear = false
+                        onClear()
+                    },
+                ) { Text(stringResource(R.string.action_clear)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClear = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun InfoScreen(onClose: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+    ) {
+        ScreenHeader(title = stringResource(R.string.settings_about), onClose = onClose)
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.footer),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.about_license),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+        )
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun SyncStatusRow(status: SyncStatus, onOpen: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onOpen),
+        shape = MaterialTheme.shapes.medium,
+        color = if (status.lastOk) {
+            MaterialTheme.colorScheme.surfaceVariant
+        } else {
+            MaterialTheme.colorScheme.errorContainer
+        },
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = status.lastMessage ?: stringResource(R.string.sync_card_title),
+                modifier = Modifier.weight(1f),
+                color = if (status.lastOk) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onErrorContainer
+                },
+                fontSize = 12.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = if (status.pending > 0) {
+                    pluralStringResource(R.plurals.pending_count, status.pending, status.pending)
+                } else {
+                    stringResource(R.string.sync_manage)
+                },
+                color = if (status.lastOk) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onErrorContainer
+                },
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScreenHeader(title: String, onClose: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = (-0.7).sp,
+        )
+        TextButton(onClick = onClose) {
+            Text(stringResource(R.string.close))
+        }
     }
 }
 
@@ -713,145 +994,6 @@ private fun pinWidget(context: Context, receiver: Class<*>) {
 }
 
 @Composable
-private fun GitHubCard(status: SyncStatus, onOpen: () -> Unit) {
-    val context = LocalContext.current
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant,
-        ),
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.sync_card_title),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        text = if (status.configured) {
-                            "${status.repoLabel} · ${status.branch} · ${status.journalDir}/"
-                        } else {
-                            stringResource(R.string.not_connected)
-                        },
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp,
-                    )
-                }
-                if (status.pending > 0) {
-                    Text(
-                        text = pluralStringResource(
-                            R.plurals.pending_count,
-                            status.pending,
-                            status.pending,
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 10.sp,
-                    )
-                }
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = status.lastMessage
-                    ?: stringResource(R.string.sync_card_desc),
-                color = if (status.configured && !status.lastOk) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                fontSize = 11.sp,
-                lineHeight = 16.sp,
-            )
-            Spacer(Modifier.height(12.dp))
-            Row {
-                Button(onClick = onOpen, modifier = Modifier.weight(1f)) {
-                    Text(
-                        if (status.configured) {
-                            stringResource(R.string.sync_manage)
-                        } else {
-                            stringResource(R.string.sync_connect)
-                        },
-                    )
-                }
-                if (status.configured) {
-                    Spacer(Modifier.width(8.dp))
-                    OutlinedButton(
-                        onClick = { GithubSyncScheduler.request(context) },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(stringResource(R.string.sync_now_short))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LocalConfigCard(
-    state: TodayState,
-    onEdit: () -> Unit,
-    onSeedDemo: () -> Unit,
-    onClear: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant,
-        ),
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "habits.json",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        text = stringResource(R.string.config_card_subtitle),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp,
-                    )
-                }
-                Text(
-                    text = state.zoneId,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 10.sp,
-                )
-            }
-            Spacer(Modifier.height(10.dp))
-            Text(
-                text = stringResource(R.string.config_card_desc),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 12.sp,
-                lineHeight = 17.sp,
-            )
-            Spacer(Modifier.height(12.dp))
-            Row {
-                Button(onClick = onEdit, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.action_edit_config))
-                }
-                Spacer(Modifier.width(8.dp))
-                OutlinedButton(onClick = onSeedDemo, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.action_reload_demo))
-                }
-            }
-            TextButton(onClick = onClear) {
-                Text(stringResource(R.string.action_clear_metrics))
-            }
-        }
-    }
-}
-
-@Composable
 private fun ConfigScreen(
     initialText: String,
     onClose: () -> Unit,
@@ -859,7 +1001,16 @@ private fun ConfigScreen(
 ) {
     var text by remember(initialText) { mutableStateOf(initialText) }
     var error by remember { mutableStateOf<String?>(null) }
+    var confirmDiscard by remember { mutableStateOf(false) }
     val invalidConfiguration = stringResource(R.string.invalid_configuration)
+    val dirty = text != initialText
+
+    fun requestClose() {
+        if (dirty) confirmDiscard = true else onClose()
+    }
+
+    // Unsaved edits are guarded even when the system back button is used.
+    BackHandler { requestClose() }
 
     Column(
         modifier = Modifier
@@ -881,7 +1032,7 @@ private fun ConfigScreen(
                     fontSize = 11.sp,
                 )
             }
-            TextButton(onClick = onClose) {
+            TextButton(onClick = { requestClose() }) {
                 Text(stringResource(R.string.close))
             }
         }
@@ -926,7 +1077,7 @@ private fun ConfigScreen(
                 },
                 modifier = Modifier.weight(4f),
             ) {
-                Text(stringResource(R.string.action_restore))
+                Text(stringResource(R.string.action_discard))
             }
             Spacer(Modifier.width(8.dp))
             Button(
@@ -938,9 +1089,30 @@ private fun ConfigScreen(
                 },
                 modifier = Modifier.weight(6f),
             ) {
-                Text(stringResource(R.string.action_save_reload))
+                Text(stringResource(R.string.action_save))
             }
         }
+    }
+
+    if (confirmDiscard) {
+        AlertDialog(
+            onDismissRequest = { confirmDiscard = false },
+            title = { Text(stringResource(R.string.discard_title)) },
+            text = { Text(stringResource(R.string.discard_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDiscard = false
+                        onClose()
+                    },
+                ) { Text(stringResource(R.string.action_discard)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDiscard = false }) {
+                    Text(stringResource(R.string.action_keep_editing))
+                }
+            },
+        )
     }
 }
 
