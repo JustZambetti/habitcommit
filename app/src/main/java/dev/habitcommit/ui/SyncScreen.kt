@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -69,14 +68,6 @@ fun SyncScreen(
     val scope = rememberCoroutineScope()
     val current = remember { syncManager.settings.target() }
 
-    var owner by remember { mutableStateOf(current?.owner.orEmpty()) }
-    var repo by remember { mutableStateOf(current?.repo.orEmpty()) }
-    var branch by remember {
-        mutableStateOf(current?.branch ?: GithubTarget.DEFAULT_BRANCH)
-    }
-    var journalDir by remember {
-        mutableStateOf(current?.journalDir ?: GithubTarget.DEFAULT_JOURNAL_DIR)
-    }
     var token by remember { mutableStateOf("") }
     var showToken by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -84,7 +75,7 @@ fun SyncScreen(
     var isError by remember { mutableStateOf(false) }
     var confirmPull by remember { mutableStateOf(false) }
     var repos by remember { mutableStateOf<List<RepoSummary>?>(null) }
-    var loadingRepos by remember { mutableStateOf(false) }
+    var tokenForPicker by remember { mutableStateOf<String?>(null) }
 
     // The token field must not appear in screenshots or the recents thumbnail.
     DisposableEffect(Unit) {
@@ -96,6 +87,51 @@ fun SyncScreen(
     fun report(text: String, error: Boolean) {
         message = text
         isError = error
+    }
+
+    suspend fun connect(summary: RepoSummary, rawToken: String) {
+        busy = true
+        val parsed = GithubTarget.parse(
+            summary.owner,
+            summary.name,
+            GithubTarget.DEFAULT_BRANCH,
+            GithubTarget.DEFAULT_JOURNAL_DIR,
+        )
+        val target = parsed.getOrElse {
+            report(it.message ?: "Repo non valido", true)
+            busy = false
+            return
+        }
+        val verified = withContext(Dispatchers.IO) { syncManager.verify(target, rawToken) }
+        verified.fold(
+            onSuccess = { info ->
+                if (!info.canPush) {
+                    report("Il token non ha permesso di scrittura su ${info.fullName}", true)
+                } else {
+                    // Follow the repository's default branch instead of assuming main.
+                    val finalTarget = GithubTarget.parse(
+                        summary.owner,
+                        summary.name,
+                        info.defaultBranch,
+                        GithubTarget.DEFAULT_JOURNAL_DIR,
+                    ).getOrDefault(target)
+                    val saved = syncManager.saveConnection(finalTarget, rawToken)
+                    saved.fold(
+                        onSuccess = {
+                            report(
+                                "Collegato a ${info.fullName} (${finalTarget.branch}, " +
+                                    "${finalTarget.journalDir}/)",
+                                false,
+                            )
+                            token = ""
+                        },
+                        onFailure = { report(it.message ?: "Salvataggio fallito", true) },
+                    )
+                }
+            },
+            onFailure = { report(it.message ?: "Verifica fallita", true) },
+        )
+        busy = false
     }
 
     Column(
@@ -115,7 +151,7 @@ fun SyncScreen(
                 )
                 Text(
                     text = if (status.configured) {
-                        "${status.repoLabel} · ${status.branch}"
+                        "${status.repoLabel} · ${status.branch} · ${status.journalDir}/"
                     } else {
                         "Nessun repo collegato"
                     },
@@ -138,44 +174,11 @@ fun SyncScreen(
 
         Spacer(Modifier.height(14.dp))
         OutlinedTextField(
-            value = owner,
-            onValueChange = { owner = it.trim(); message = null },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Owner") },
-            singleLine = true,
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = repo,
-            onValueChange = { repo = it.trim(); message = null },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Repo") },
-            singleLine = true,
-        )
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = branch,
-                onValueChange = { branch = it.trim(); message = null },
-                modifier = Modifier.weight(1f),
-                label = { Text("Branch") },
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = journalDir,
-                onValueChange = { journalDir = it.trim(); message = null },
-                modifier = Modifier.weight(1f),
-                label = { Text("Cartella journal") },
-                singleLine = true,
-            )
-        }
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
             value = token,
             onValueChange = { token = it; message = null },
             modifier = Modifier.fillMaxWidth(),
             label = {
-                Text(if (status.configured) "Nuovo token (lascia vuoto per tenere quello salvato)" else "Token fine-grained")
+                Text(if (status.configured) "Nuovo PAT (lascia vuoto per tenere quello salvato)" else "PAT fine-grained")
             },
             singleLine = true,
             visualTransformation = if (showToken) VisualTransformation.None else PasswordVisualTransformation(),
@@ -187,57 +190,11 @@ fun SyncScreen(
             },
         )
 
-        Spacer(Modifier.height(8.dp))
-        OutlinedButton(
-            onClick = {
-                val effectiveToken = token.ifBlank { syncManager.token() }
-                if (effectiveToken.isNullOrBlank()) {
-                    report("Inserisci un token GitHub per elencare i repo", true)
-                    return@OutlinedButton
-                }
-                loadingRepos = true
-                message = null
-                scope.launch {
-                    val loaded = withContext(Dispatchers.IO) {
-                        GithubClient.listRepositories(effectiveToken)
-                    }
-                    loaded.fold(
-                        onSuccess = { list ->
-                            repos = list
-                            if (list.isEmpty()) {
-                                report(
-                                    "Nessun repo visibile: il token non copre nessun repository. " +
-                                        "Aggiungine uno al PAT o inserisci owner e repo a mano.",
-                                    true,
-                                )
-                            }
-                        },
-                        onFailure = { report(it.message ?: "Elenco repo fallito", true) },
-                    )
-                    loadingRepos = false
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !busy && !loadingRepos,
-        ) {
-            Text(if (loadingRepos) "Carico i repo…" else "Scegli repo da GitHub", fontSize = 12.sp)
-        }
-
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = "L'elenco mostra i repo visibili al token: un PAT fine-grained limitato a un " +
-                "singolo repo vede solo quello. Per vedere più repo deve avere Metadata: Read " +
-                "su ciascuno (Contents: Read and write resta necessario per scrivere).",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 10.sp,
-            lineHeight = 15.sp,
-        )
-
         Spacer(Modifier.height(10.dp))
         Text(
-            text = "Il PAT deve avere Contents: Read and write e Metadata: Read. GitHub non " +
-                "permette di limitare un token a una sottocartella: usa un repo dedicato " +
-                "ai dati, oppure una push ruleset che consenta solo journal/**.",
+            text = "Il PAT deve avere Contents: Read and write e Metadata: Read. Scegli " +
+                "\"Only select repositories\" e limita il token al repo dei dati: l'app userà " +
+                "il branch predefinito del repo e la cartella journal/.",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 10.sp,
             lineHeight = 15.sp,
@@ -256,47 +213,50 @@ fun SyncScreen(
         Spacer(Modifier.height(14.dp))
         Button(
             onClick = {
+                val effectiveToken = token.ifBlank { syncManager.token() }
+                if (effectiveToken.isNullOrBlank()) {
+                    report("Inserisci un PAT GitHub", true)
+                    return@Button
+                }
                 busy = true
                 message = null
                 scope.launch {
-                    val parsed = GithubTarget.parse(owner, repo, branch, journalDir)
-                    val target = parsed.getOrElse {
-                        report(it.message ?: "Dati non validi", true)
-                        busy = false
-                        return@launch
+                    val loaded = withContext(Dispatchers.IO) {
+                        GithubClient.listRepositories(effectiveToken)
                     }
-                    val effectiveToken = token.ifBlank { syncManager.token() }
-                    if (effectiveToken.isNullOrBlank()) {
-                        report("Inserisci un token GitHub", true)
-                        busy = false
-                        return@launch
-                    }
-                    val verified = withContext(Dispatchers.IO) {
-                        syncManager.verify(target, effectiveToken)
-                    }
-                    verified.fold(
-                        onSuccess = { info ->
-                            if (!info.canPush) {
-                                report("Il token non ha permesso di scrittura su ${info.fullName}", true)
-                            } else {
-                                val saved = syncManager.saveConnection(target, token.ifBlank { null })
-                                saved.fold(
-                                    onSuccess = {
-                                        report("Collegato a ${info.fullName} (${target.branch})", false)
-                                    },
-                                    onFailure = { report(it.message ?: "Salvataggio fallito", true) },
-                                )
+                    loaded.fold(
+                        onSuccess = { list ->
+                            when {
+                                list.isEmpty() -> {
+                                    report(
+                                        "Il PAT non vede nessun repository. Aggiungine uno al " +
+                                            "token su GitHub e riprova.",
+                                        true,
+                                    )
+                                    busy = false
+                                }
+                                list.size == 1 -> {
+                                    busy = false
+                                    connect(list.first(), effectiveToken)
+                                }
+                                else -> {
+                                    tokenForPicker = effectiveToken
+                                    repos = list
+                                    busy = false
+                                }
                             }
                         },
-                        onFailure = { report(it.message ?: "Verifica fallita", true) },
+                        onFailure = {
+                            report(it.message ?: "Verifica fallita", true)
+                            busy = false
+                        },
                     )
-                    busy = false
                 }
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = !busy,
         ) {
-            Text(if (busy) "Verifico…" else "Salva e verifica")
+            Text(if (busy) "Verifico…" else "Collega repo")
         }
 
         Spacer(Modifier.height(10.dp))
@@ -368,7 +328,8 @@ fun SyncScreen(
                         .verticalScroll(rememberScrollState()),
                 ) {
                     Text(
-                        text = "${list.size} repo visibili al token, aggiornati di recente in cima.",
+                        text = "${list.size} repo visibili al token. Per evitare di scegliere, " +
+                            "limita il PAT a un solo repository.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp,
                     )
@@ -376,10 +337,12 @@ fun SyncScreen(
                     list.forEach { summary ->
                         TextButton(
                             onClick = {
-                                owner = summary.owner
-                                repo = summary.name
-                                message = null
+                                val picked = summary
+                                val rawToken = tokenForPicker
                                 repos = null
+                                if (rawToken != null) {
+                                    scope.launch { connect(picked, rawToken) }
+                                }
                             },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
