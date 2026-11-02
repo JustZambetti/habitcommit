@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HabitCommit</string>
+
+    <!-- Widgets (launcher labels) -->
+    <string name="widget_44_name">HabitCommit · Piano</string>
+    <string name="widget_42_name">HabitCommit · Compatto</string>
+    <string name="widget_22_name">HabitCommit · Focus</string>
+    <string name="widget_24_name">HabitCommit · Verticale</string>
+    <string name="widget_44_description">Piano di oggi, cinque check, streak e configurazione.</string>
+    <string name="widget_42_description">Quattro check di oggi e streak, in formato compatto.</string>
+    <string name="widget_22_description">Progresso, streak e prossimo check, in formato minimo.</string>
+    <string name="widget_24_description">Quattro check di oggi in formato verticale, con pulsante rapido.</string>
+
+    <!-- Widget contents -->
+    <string name="widget_today_upper">OGGI</string>
+    <string name="widget_empty">Nessuna metrica per oggi</string>
+    <string name="widget_open_app">Apri app</string>
+    <string name="widget_open_app_upper">APRI APP</string>
+    <string name="widget_config">Configura</string>
+    <string name="widget_saved">salvato ✓</string>
+    <string name="widget_plan_file">PIANO · habits.json</string>
+    <string name="widget_tomorrow">Domani</string>
+    <string name="widget_extra_in_app">+%1$d in app</string>
+    <string name="widget_streak_abbr">%1$d gg</string>
+    <plurals name="widget_streak_row">
+        <item quantity="one">%d giorno di fila</item>
+        <item quantity="other">%d giorni di fila</item>
+    </plurals>
+
+    <!-- Today -->
+    <string name="today_title">Oggi</string>
+    <string name="loading_plan">Carico il piano di oggi…</string>
+    <string name="history_title">Storico</string>
+    <string name="config_title">Config</string>
+
+    <string name="demo_badge">DEMO</string>
+    <string name="demo_local">Dati di esempio locali</string>
+    <string name="action_clear">Azzera</string>
+    <string name="config_invalid_title">La config non è valida</string>
+    <string name="action_open_habits_json">Apri habits.json</string>
+
+    <string name="plan_today">PIANO DI OGGI</string>
+    <string name="no_metrics_for_plan">Nessuna metrica per questo piano.</string>
+    <string name="saved_locally">salvato in locale ✓</string>
+    <string name="tomorrow">DOMANI</string>
+    <string name="action_edit_habits">Modifica habits.json</string>
+
+    <string name="source_date_override">OVERRIDE DI OGGI</string>
+    <string name="source_weekday">PIANO DEL GIORNO · HABITS.JSON</string>
+    <string name="source_default">PIANO PREDEFINITO</string>
+    <string name="source_local_override">PIANO · HABITS.JSON</string>
+
+    <plurals name="streak_days">
+        <item quantity="one">%d giorno di fila</item>
+        <item quantity="other">%d giorni di fila</item>
+    </plurals>
+
+    <string name="widget_card_title">Widget sulla home</string>
+    <string name="widget_card_desc">Ogni tap sul widget aggiorna subito i dati. Aggiungilo alla home:</string>
+    <string name="widget_pin_note">Se il launcher non mostra la richiesta: tieni premuto sulla home → Widget → HabitCommit.</string>
+    <string name="widget_pin_unsupported">Il launcher non supporta l\'aggiunta automatica: usa Widget → HabitCommit.</string>
+
+    <string name="sync_card_title">Sync GitHub</string>
+    <string name="not_connected">Non collegata</string>
+    <plurals name="pending_count">
+        <item quantity="one">%d in coda</item>
+        <item quantity="other">%d in coda</item>
+    </plurals>
+    <string name="sync_card_desc">Collega un repo privato per tenere la cronologia in git. I valori restano locali finché non c\'è rete.</string>
+    <string name="sync_manage">Gestisci sync</string>
+    <string name="sync_connect">Collega repo</string>
+    <string name="sync_now_short">Sincronizza</string>
+
+    <string name="config_card_subtitle">Metriche, piani e schedule</string>
+    <string name="config_card_desc">Il piano di oggi viene risolto da questo file. Con la sync attiva ogni valore registrato viene accodato e poi committato sul tuo repo GitHub.</string>
+    <string name="action_edit_config">Modifica config</string>
+    <string name="action_reload_demo">Ricarica demo</string>
+    <string name="action_clear_metrics">Azzera tutte le metriche locali</string>
+    <string name="footer">v0.1 smoke · local-first · nessun dato lascia il telefono</string>
+
+    <string name="config_screen_subtitle">Configurazione locale · validazione allo schema 1</string>
+    <string name="close">Chiudi</string>
+    <string name="config_hint">Incolla qui il contenuto del file. Controllo subito ID, metriche, piani, schedule e override.</string>
+    <string name="json">JSON</string>
+    <string name="action_restore">Ripristina</string>
+    <string name="action_save_reload">Salva e ricarica</string>
+    <string name="invalid_configuration">Configurazione non valida</string>
+
+    <!-- History -->
+    <string name="history_kicker">STORICO</string>
+    <string name="history_heading">Metriche passate</string>
+    <string name="history_range">Ultimi %1$d giorni · %2$s</string>
+    <string name="range_chip">%1$d g</string>
+    <string name="history_loading">Carico lo storico…</string>
+    <string name="history_empty">Nessun dato: registra qualche valore dal widget e torna qui.</string>
+    <string name="history_legend">Quadrato vuoto: non in piano quel giorno. Chiaro: in piano ma non registrato. Pieno: fatto. Per i rating il colore sale con il voto.</string>
+    <string name="history_metric_days">%1$d/%2$d giorni</string>
+    <string name="history_average">★ %1$s</string>
+    <string name="history_recent">ULTIMI GIORNI</string>
+    <string name="history_today">oggi</string>
+
+    <!-- Sync -->
+    <string name="sync_title">Sync GitHub</string>
+    <string name="pat_label">GitHub Personal Access Token</string>
+    <string name="pat_help">Come creare un PAT</string>
+    <string name="action_show">Mostra</string>
+    <string name="action_hide">Nascondi</string>
+    <string name="pat_requirement">Il PAT deve avere Contents: write per committare gli aggiornamenti.</string>
+    <string name="repo_section">Repository</string>
+    <string name="repo_owner">Owner</string>
+    <string name="repo_name">Nome</string>
+    <string name="repo_branch">Branch</string>
+    <string name="habitcommit_path">Percorso HabitCommit</string>
+    <string name="action_change_repo">Cambia repo</string>
+    <string name="action_connect">Collega</string>
+    <string name="action_checking">Verifico…</string>
+    <string name="action_sync_now">Sincronizza ora</string>
+    <string name="action_download_config">Scarica habits.json</string>
+    <string name="action_disconnect">Scollega repo</string>
+    <string name="sync_queued">In coda: %1$d</string>
+    <string name="sync_last_at">ultima sync %1$s</string>
+    <string name="sync_queued_toast">Sincronizzazione in coda</string>
+    <string name="sync_disconnected_toast">Sync scollegata. I dati locali restano.</string>
+    <string name="pick_repo_title">Scegli repo</string>
+    <string name="repo_private">privato</string>
+    <string name="repo_public">pubblico</string>
+    <string name="download_title">Scaricare habits.json?</string>
+    <string name="download_body">Il file del repo sostituirà la configurazione locale dopo la validazione. I valori registrati non vengono toccati.</string>
+    <string name="action_download">Scarica</string>
+    <string name="action_cancel">Annulla</string>
+    <string name="config_pulled">habits.json aggiornato dal repo</string>
+    <string name="error_token_required">Inserisci un PAT GitHub</string>
+    <string name="error_no_repo">Il PAT non vede nessun repository. Aggiungine uno al token su GitHub e riprova.</string>
+    <string name="error_verification_failed">Verifica fallita</string>
+    <string name="error_save_failed">Salvataggio fallito</string>
+    <string name="error_no_write">Il token non ha permesso di scrittura su %1$s</string>
+    <string name="error_download_failed">Download fallito</string>
+    <string name="error_invalid_repo">Repo non valido</string>
+
+    <!-- Sync engine and network errors -->
+    <string name="sync_saved">Collegato a %1$s (%2$s, %3$s/)</string>
+    <string name="sync_disconnected">Sync scollegata</string>
+    <string name="sync_all_synced">Tutto sincronizzato</string>
+    <string name="sync_syncing_remaining">Sincronizzo… %1$d rimasti</string>
+    <string name="sync_token_missing">Token mancante: ricollega il repo</string>
+    <string name="sync_failed">Sincronizzazione fallita</string>
+    <string name="error_sync_not_configured">Sync non configurata</string>
+    <string name="error_token_invalid">Token non valido o scaduto. Genera un nuovo PAT.</string>
+    <string name="error_permissions">Permessi insufficienti o rate limit. Servono Contents: Read and write + Metadata: Read.</string>
+    <string name="error_repo_not_found">%1$s. Controlla repo e permessi del token.</string>
+    <string name="error_network">Errore di rete: %1$s</string>
+    <string name="error_file_too_large">File journal troppo grande</string>
+    <string name="error_commit_rejected">Commit rifiutato</string>
+    <string name="error_journal_conflict">Journal aggiornato da un\'altra sincronizzazione</string>
+    <string name="error_config_missing">%1$s non esiste sul branch %2$s</string>
+    <string name="error_not_a_file">%1$s non è un file</string>
+    <string name="error_owner_invalid">Owner GitHub non valido</string>
+    <string name="error_repo_invalid">Nome repo non valido</string>
+    <string name="error_branch_invalid">Branch non valido</string>
+    <string name="error_journal_dir_invalid">Cartella journal non valida</string>
+</resources>

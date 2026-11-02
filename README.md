@@ -17,7 +17,8 @@ Source: [github.com/JustZambetti/habitcommit](https://github.com/JustZambetti/ha
 - **Taps repaint in place.** A widget tap is handled by a plain `BroadcastReceiver` that writes the journal and applies the new `RemoteViews` before it returns — no Glance session and no WorkManager in the tap path. Measured on an emulator: ~0.9 s for the first tap after the process was killed, ~35 ms when the process is warm (this used to be 3.3 s and 0.6 s).
 - **A small companion app** to review today, check past metrics, edit `habits.json` with validation, clear data and seed demo data. The **Storico** page shows one strip per metric for the last 14, 30 or 90 days plus a per-day breakdown of the last week; empty cells mean the metric was not in that day's plan. Plans are changed only in `habits.json` — there is no per-day plan picker, because once sync lands the config lives in your GitHub repo.
 - **Local first.** Events are appended to a local JSONL journal before anything else happens; widgets re-render immediately.
-- **Optional GitHub sync.** Connect a private repo with a fine-grained PAT (only **Contents: Read and write** + **Metadata: Read**). Each recorded value becomes one commit that appends a line to `journal/YYYY-MM/<device>.jsonl`. A durable outbox means taps never wait for the network, and retries deduplicate by event id. The app can also pull `habits.json` from the repo after validating it. The setup screen asks **only for the PAT**: it connects automatically when the token sees a single repository, otherwise it shows the repos the token can access (a PAT scoped to one repo lists only that one). The branch is the repository default and the journal lives in `journal/`.
+- **Optional GitHub sync.** Connect a private repo with a fine-grained PAT (only **Contents: Read and write** + **Metadata: Read**). Each recorded value becomes one commit that appends a line to `journal/YYYY-MM/<device>.jsonl`. A durable outbox means taps never wait for the network, and retries deduplicate by event id. The app can also pull `habits.json` from the repo after validating it. The setup screen asks **only for the PAT**: as soon as a plausible token is entered it looks up the visible repositories and proposes one (with a picker when the token sees several; a PAT scoped to one repo lists only that one). Owner and name are read-only; branch and HabitCommit path are editable and prefill with the repository default and `journal`.
+- **English, Italian and Romanian.** Every screen, widget label and sync error follows the device language (`values/`, `values-it/`, `values-ro/`); the sample `habits.json` is seeded in the same language.
 
 Example config (shipped as `app/src/main/assets/sample_habits.json`):
 
@@ -28,14 +29,14 @@ Example config (shipped as `app/src/main/assets/sample_habits.json`):
   "metrics": [
     {"id": "review-pr", "label": "Review PR"},
     {"id": "deep-work", "label": "Deep work 2h"},
-    {"id": "client-call", "label": "Chiama cliente"},
-    {"id": "reading", "label": "Leggi 20 pagine"},
-    {"id": "gym", "label": "Allenamento"},
+    {"id": "client-call", "label": "Call client"},
+    {"id": "reading", "label": "Read 20 pages"},
+    {"id": "gym", "label": "Workout"},
     {"id": "focus", "label": "Focus", "type": "rating", "max": 5},
-    {"id": "energy", "label": "Energia", "type": "rating", "max": 5}
+    {"id": "energy", "label": "Energy", "type": "rating", "max": 5}
   ],
   "plans": {
-    "office": {"label": "Ufficio", "items": ["review-pr", "deep-work", "client-call", "reading", "focus"]},
+    "office": {"label": "Office", "items": ["review-pr", "deep-work", "client-call", "reading", "focus"]},
     "weekend": {"label": "Weekend", "items": ["gym", "reading", "energy"]}
   },
   "schedule": {

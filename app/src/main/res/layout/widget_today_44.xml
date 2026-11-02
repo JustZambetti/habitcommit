@@ -48,7 +48,7 @@
                 android:paddingTop="2dp"
                 android:paddingEnd="6dp"
                 android:paddingBottom="2dp"
-                android:text="PIANO · habits.json"
+                android:text="@string/widget_plan_file"
                 android:textColor="#9A4E28"
                 android:textSize="8sp" />
         </LinearLayout>
@@ -134,7 +134,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="3dp"
             android:maxLines="1"
-            android:text="salvato ✓"
+            android:text="@string/widget_saved"
             android:textColor="#55241F19"
             android:textSize="8.5sp" />
     </LinearLayout>
@@ -149,7 +149,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Domani"
+            android:text="@string/widget_tomorrow"
             android:textColor="#8A241F19"
             android:textSize="9sp" />
 
@@ -191,7 +191,7 @@
             android:background="@drawable/widget_button_tonal"
             android:fontFamily="sans-serif-medium"
             android:gravity="center"
-            android:text="Configura"
+            android:text="@string/widget_config"
             android:textColor="#123322"
             android:textSize="13sp" />
 
@@ -207,7 +207,7 @@
             android:background="@drawable/widget_button_filled"
             android:fontFamily="sans-serif-medium"
             android:gravity="center"
-            android:text="Apri app"
+            android:text="@string/widget_open_app"
             android:textColor="#FFFFFF"
             android:textSize="13sp" />
     </LinearLayout>

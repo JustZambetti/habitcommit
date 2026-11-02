@@ -49,7 +49,8 @@ object WidgetViews {
 
         val showDate = size != WidgetSize.SMALL
         if (showDate) {
-            views.setTextViewText(R.id.date, "OGGI · ${widgetDate(state.date)}")
+            val label = context.getString(R.string.widget_today_upper)
+            views.setTextViewText(R.id.date, "$label · ${widgetDate(state.date)}")
         }
         views.setTextViewText(R.id.plan, state.plan.label)
         views.setTextViewText(R.id.count, "${state.doneCount}/${state.total}")
@@ -57,7 +58,7 @@ object WidgetViews {
         if (size == WidgetSize.LARGE) {
             val extra = state.metrics.size - VISIBLE_ROWS[WidgetSize.LARGE]!!
             if (extra > 0) {
-                views.setTextViewText(R.id.extra, "+$extra in app")
+                views.setTextViewText(R.id.extra, context.getString(R.string.widget_extra_in_app, extra))
             } else {
                 views.setViewVisibility(R.id.extra, View.GONE)
             }
@@ -73,14 +74,18 @@ object WidgetViews {
                     else -> R.layout.widget_heat_cell_compact
                 }
                 bindHeat(views, state.heat.takeLast(HEAT_CELLS[size] ?: 12), cell)
-                views.setTextViewText(R.id.streak, "${state.streak} gg")
+                views.setTextViewText(R.id.streak, context.getString(R.string.widget_streak_abbr, state.streak))
             }
             WidgetSize.SMALL -> {
                 val percent = (state.progress * 100).roundToInt()
                 views.setTextViewText(R.id.percent, "$percent%")
                 bindHeat(views, state.heat.takeLast(9), R.layout.widget_heat_cell_small)
-                val days = if (state.streak == 1) "1 giorno" else "${state.streak} giorni"
-                views.setTextViewText(R.id.streak, "$days di fila")
+                val streak = context.resources.getQuantityString(
+                    R.plurals.widget_streak_row,
+                    state.streak,
+                    state.streak,
+                )
+                views.setTextViewText(R.id.streak, streak)
             }
         }
 
@@ -263,7 +268,8 @@ object WidgetViews {
     }
 
     private fun widgetDate(date: LocalDate): String {
-        return date.format(DateTimeFormatter.ofPattern("d MMM", Locale.ITALIAN))
-            .uppercase(Locale.ITALIAN)
+        val locale = Locale.getDefault()
+        return date.format(DateTimeFormatter.ofPattern("d MMM", locale))
+            .uppercase(locale)
     }
 }

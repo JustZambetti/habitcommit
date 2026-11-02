@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "timezone": "Europe/Rome",
+  "metrics": [
+    {"id": "review-pr", "label": "Review PR", "type": "binary"},
+    {"id": "deep-work", "label": "Deep work 2h", "type": "binary"},
+    {"id": "client-call", "label": "Sună clientul", "type": "binary"},
+    {"id": "reading", "label": "Citește 20 de pagini", "type": "binary"},
+    {"id": "gym", "label": "Antrenament", "type": "binary"},
+    {"id": "focus", "label": "Focus", "type": "rating", "max": 5},
+    {"id": "energy", "label": "Energie", "type": "rating", "max": 5}
+  ],
+  "plans": {
+    "office": {
+      "label": "Birou",
+      "items": ["review-pr", "deep-work", "client-call", "reading", "gym", "focus"]
+    },
+    "weekend": {
+      "label": "Weekend",
+      "items": ["gym", "reading", "energy"]
+    },
+    "travel": {
+      "label": "Călătorie",
+      "items": ["reading", "energy"]
+    }
+  },
+  "schedule": {
+    "byWeekday": {
+      "mon": "office",
+      "tue": "office",
+      "wed": "office",
+      "thu": "office",
+      "fri": "office",
+      "sat": "weekend",
+      "sun": "weekend"
+    },
+    "overrides": {
+      "2026-11-03": {"plan": "travel"},
+      "2026-11-10": {"add": ["gym"], "remove": ["client-call"]}
+    }
+  }
+}

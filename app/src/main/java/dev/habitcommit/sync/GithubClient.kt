@@ -1,6 +1,8 @@
 package dev.habitcommit.sync
 
+import android.content.res.Resources
 import android.util.Base64
+import dev.habitcommit.R
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -13,6 +15,7 @@ data class RepoSummary(
     val name: String,
     val fullName: String,
     val isPrivate: Boolean,
+    val defaultBranch: String,
 )
 
 /**
@@ -23,6 +26,7 @@ data class RepoSummary(
  * per-month JSONL file, so two devices never rewrite the same file.
  */
 class GithubClient(
+    private val resources: Resources,
     private val token: String,
     private val target: GithubTarget,
 ) {
@@ -84,10 +88,14 @@ class GithubClient(
             when {
                 write.isSuccess -> return Result.success(Unit)
                 write.exceptionOrNull() is ConflictException -> continue
-                else -> return Result.failure(write.exceptionOrNull() ?: GithubException("commit rifiutato"))
+                else -> return Result.failure(
+                    write.exceptionOrNull() ?: GithubException(resources.getString(R.string.error_commit_rejected)),
+                )
             }
         }
-        return Result.failure(GithubException("journal aggiornato da un'altra sincronizzazione", retryable = true))
+        return Result.failure(
+            GithubException(resources.getString(R.string.error_journal_conflict), retryable = true),
+        )
     }
 
     /** Reads habits.json from the repo root. The caller validates it before saving. */
@@ -96,7 +104,13 @@ class GithubClient(
             is ReadResult.Failed -> Result.failure(read.error)
             is ReadResult.Ok -> {
                 val file = read.file ?: return Result.failure(
-                    GithubException("${GithubTarget.CONFIG_PATH} non esiste sul branch ${target.branch}"),
+                    GithubException(
+                        resources.getString(
+                            R.string.error_config_missing,
+                            GithubTarget.CONFIG_PATH,
+                            target.branch,
+                        ),
+                    ),
                 )
                 Result.success(file.text)
             }
@@ -117,14 +131,18 @@ class GithubClient(
                     if (json.has("content") && json.optString("encoding") == "base64") {
                         val size = json.optLong("size", 0)
                         if (size > MAX_CONTENT_BYTES) {
-                            return ReadResult.Failed(GithubException("file journal troppo grande"))
+                            return ReadResult.Failed(
+                                GithubException(resources.getString(R.string.error_file_too_large)),
+                            )
                         }
                         val raw = json.getString("content").replace("\n", "").replace("\r", "")
                         val bytes = Base64.decode(raw, Base64.DEFAULT)
                         ReadResult.Ok(RemoteFile(String(bytes, Charsets.UTF_8), json.getString("sha")))
                     } else {
                         // Directories and submodules return no content; both are errors here.
-                        ReadResult.Failed(GithubException("$path non è un file"))
+                        ReadResult.Failed(
+                            GithubException(resources.getString(R.string.error_not_a_file, path)),
+                        )
                     }
                 }
                 404 -> ReadResult.Ok(null)
@@ -170,15 +188,15 @@ class GithubClient(
         }
         val detail = message.take(200).ifBlank { "HTTP ${response.code}" }
         return when (response.code) {
-            401 -> "Token non valido o scaduto. Genera un nuovo PAT."
-            403 -> "Permessi insufficienti o rate limit. Serve Contents: Read and write + Metadata: Read."
-            404 -> "$detail. Controlla repo, branch e permessi del token."
+            401 -> resources.getString(R.string.error_token_invalid)
+            403 -> resources.getString(R.string.error_permissions)
+            404 -> resources.getString(R.string.error_repo_not_found, detail)
             else -> detail
         }
     }
 
     private fun networkError(e: Exception): String =
-        "Errore di rete: ${e.javaClass.simpleName}"
+        resources.getString(R.string.error_network, e.javaClass.simpleName)
 
     private fun encode(value: String): String =
         URLEncoder.encode(value, "UTF-8").replace("+", "%20")
@@ -234,7 +252,7 @@ class GithubClient(
          * (Contents: Read and write + Metadata: Read stays the narrowest useful set).
          * Only the first page (100 repos) is fetched.
          */
-        fun listRepositories(token: String): Result<List<RepoSummary>> = try {
+        fun listRepositories(resources: Resources, token: String): Result<List<RepoSummary>> = try {
             val path = "/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member"
             val response = httpRequest(token, "GET", path)
             if (response.code == 200) {
@@ -251,19 +269,30 @@ class GithubClient(
                                 name = names[1],
                                 fullName = fullName,
                                 isPrivate = json.optBoolean("private", false),
+                                defaultBranch = json.optString("default_branch", GithubTarget.DEFAULT_BRANCH),
                             ),
                         )
                     }
                 }
                 Result.success(repos)
             } else {
-                Result.failure(GithubException(staticErrorFor(response), retryable = response.code >= 500))
+                Result.failure(
+                    GithubException(
+                        staticErrorFor(resources, response),
+                        retryable = response.code >= 500,
+                    ),
+                )
             }
         } catch (e: Exception) {
-            Result.failure(GithubException("Errore di rete: ${e.javaClass.simpleName}", retryable = true))
+            Result.failure(
+                GithubException(
+                    resources.getString(R.string.error_network, e.javaClass.simpleName),
+                    retryable = true,
+                ),
+            )
         }
 
-        private fun staticErrorFor(response: Response): String {
+        private fun staticErrorFor(resources: Resources, response: Response): String {
             val message = try {
                 JSONObject(response.body).optString("message")
             } catch (e: Exception) {
@@ -271,9 +300,9 @@ class GithubClient(
             }
             val detail = message.take(200).ifBlank { "HTTP ${response.code}" }
             return when (response.code) {
-                401 -> "Token non valido o scaduto. Genera un nuovo PAT."
-                403 -> "Permessi insufficienti o rate limit. Serve Contents: Read and write + Metadata: Read."
-                404 -> "$detail. Controlla i permessi del token."
+                401 -> resources.getString(R.string.error_token_invalid)
+                403 -> resources.getString(R.string.error_permissions)
+                404 -> resources.getString(R.string.error_repo_not_found, detail)
                 else -> detail
             }
         }

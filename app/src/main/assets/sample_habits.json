@@ -4,15 +4,15 @@
   "metrics": [
     {"id": "review-pr", "label": "Review PR", "type": "binary"},
     {"id": "deep-work", "label": "Deep work 2h", "type": "binary"},
-    {"id": "client-call", "label": "Chiama cliente", "type": "binary"},
-    {"id": "reading", "label": "Leggi 20 pagine", "type": "binary"},
-    {"id": "gym", "label": "Allenamento", "type": "binary"},
+    {"id": "client-call", "label": "Call client", "type": "binary"},
+    {"id": "reading", "label": "Read 20 pages", "type": "binary"},
+    {"id": "gym", "label": "Workout", "type": "binary"},
     {"id": "focus", "label": "Focus", "type": "rating", "max": 5},
-    {"id": "energy", "label": "Energia", "type": "rating", "max": 5}
+    {"id": "energy", "label": "Energy", "type": "rating", "max": 5}
   ],
   "plans": {
     "office": {
-      "label": "Ufficio",
+      "label": "Office",
       "items": ["review-pr", "deep-work", "client-call", "reading", "gym", "focus"]
     },
     "weekend": {
@@ -20,7 +20,7 @@
       "items": ["gym", "reading", "energy"]
     },
     "travel": {
-      "label": "Viaggio",
+      "label": "Travel",
       "items": ["reading", "energy"]
     }
   },

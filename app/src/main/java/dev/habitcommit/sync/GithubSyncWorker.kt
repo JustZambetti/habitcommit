@@ -10,6 +10,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dev.habitcommit.HabitCommitApp
+import dev.habitcommit.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -28,7 +29,7 @@ class GithubSyncWorker(
         val manager = app.syncManager
         val target = manager.settings.target() ?: return@withContext Result.success()
         val token = manager.token() ?: run {
-            manager.recordFailure("Token mancante: ricollega il repo")
+            manager.recordFailure(applicationContext.getString(R.string.sync_token_missing))
             return@withContext Result.failure()
         }
 
@@ -38,7 +39,7 @@ class GithubSyncWorker(
             return@withContext Result.success()
         }
 
-        val client = GithubClient(token, target)
+        val client = GithubClient(applicationContext.resources, token, target)
         val batch = pending.take(MAX_PER_RUN)
         for (event in batch) {
             val result = client.appendEvent(event, manager.settings.deviceId)
@@ -47,7 +48,7 @@ class GithubSyncWorker(
                 continue
             }
             val error = result.exceptionOrNull()
-            val message = error?.message ?: "Sincronizzazione fallita"
+            val message = error?.message ?: applicationContext.getString(R.string.sync_failed)
             manager.recordFailure(message)
             return@withContext if ((error as? GithubClient.GithubException)?.retryable == true) {
                 Result.retry()

@@ -22,7 +22,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="OGGI"
+                android:text="@string/widget_today_upper"
                 android:textColor="#55241F19"
                 android:textSize="8sp" />
 
@@ -94,7 +94,7 @@
         android:background="@drawable/widget_button_filled"
         android:fontFamily="sans-serif-medium"
         android:gravity="center"
-        android:text="APRI APP"
+        android:text="@string/widget_open_app_upper"
         android:textColor="#FFFFFF"
         android:textSize="12sp" />
 </LinearLayout>

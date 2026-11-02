@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HabitCommit</string>
+
+    <!-- Widgets (launcher labels) -->
+    <string name="widget_44_name">HabitCommit · Plan</string>
+    <string name="widget_42_name">HabitCommit · Compact</string>
+    <string name="widget_22_name">HabitCommit · Focus</string>
+    <string name="widget_24_name">HabitCommit · Vertical</string>
+    <string name="widget_44_description">Planul de azi, cinci check-uri, serie și configurare.</string>
+    <string name="widget_42_description">Patru check-uri pentru azi și seria, în format compact.</string>
+    <string name="widget_22_description">Progres, serie și următorul check, în format minim.</string>
+    <string name="widget_24_description">Patru check-uri pentru azi în format vertical, cu buton rapid.</string>
+
+    <!-- Widget contents -->
+    <string name="widget_today_upper">AZI</string>
+    <string name="widget_empty">Nicio metrică pentru azi</string>
+    <string name="widget_open_app">Deschide aplicația</string>
+    <string name="widget_open_app_upper">DESCHIDE APP</string>
+    <string name="widget_config">Configurează</string>
+    <string name="widget_saved">salvat ✓</string>
+    <string name="widget_plan_file">PLAN · habits.json</string>
+    <string name="widget_tomorrow">Mâine</string>
+    <string name="widget_extra_in_app">+%1$d în app</string>
+    <string name="widget_streak_abbr">%1$d z</string>
+    <plurals name="widget_streak_row">
+        <item quantity="one">%d zi la rând</item>
+        <item quantity="few">%d zile la rând</item>
+        <item quantity="other">%d de zile la rând</item>
+    </plurals>
+
+    <!-- Today -->
+    <string name="today_title">Astăzi</string>
+    <string name="loading_plan">Încarc planul de azi…</string>
+    <string name="history_title">Istoric</string>
+    <string name="config_title">Config</string>
+
+    <string name="demo_badge">DEMO</string>
+    <string name="demo_local">Date demo locale</string>
+    <string name="action_clear">Șterge</string>
+    <string name="config_invalid_title">Configurația nu este validă</string>
+    <string name="action_open_habits_json">Deschide habits.json</string>
+
+    <string name="plan_today">PLANUL DE AZI</string>
+    <string name="no_metrics_for_plan">Nicio metrică pentru acest plan.</string>
+    <string name="saved_locally">salvat local ✓</string>
+    <string name="tomorrow">MÂINE</string>
+    <string name="action_edit_habits">Editează habits.json</string>
+
+    <string name="source_date_override">SUPRASCRIEREA DE AZI</string>
+    <string name="source_weekday">PLANUL ZILEI · HABITS.JSON</string>
+    <string name="source_default">PLAN IMPLICIT</string>
+    <string name="source_local_override">PLAN · HABITS.JSON</string>
+
+    <plurals name="streak_days">
+        <item quantity="one">%d zi la rând</item>
+        <item quantity="few">%d zile la rând</item>
+        <item quantity="other">%d de zile la rând</item>
+    </plurals>
+
+    <string name="widget_card_title">Widget pe ecranul principal</string>
+    <string name="widget_card_desc">Fiecare atingere actualizează imediat datele. Adaugă-l pe ecranul principal:</string>
+    <string name="widget_pin_note">Dacă launcherul nu afișează cererea: ține apăsat pe ecranul principal → Widgeturi → HabitCommit.</string>
+    <string name="widget_pin_unsupported">Launcherul nu acceptă adăugarea automată: folosește Widgeturi → HabitCommit.</string>
+
+    <string name="sync_card_title">Sincronizare GitHub</string>
+    <string name="not_connected">Neconectată</string>
+    <plurals name="pending_count">
+        <item quantity="one">%d în coadă</item>
+        <item quantity="few">%d în coadă</item>
+        <item quantity="other">%d în coadă</item>
+    </plurals>
+    <string name="sync_card_desc">Conectează un repo privat pentru a păstra istoricul în git. Valorile rămân locale până există rețea.</string>
+    <string name="sync_manage">Gestionează sincronizarea</string>
+    <string name="sync_connect">Conectează repo</string>
+    <string name="sync_now_short">Sincronizează</string>
+
+    <string name="config_card_subtitle">Metrice, planuri și program</string>
+    <string name="config_card_desc">Planul de azi este derivat din acest fișier. Cu sincronizarea activă, fiecare valoare înregistrată este pusă în coadă și trimisă în repo-ul tău GitHub.</string>
+    <string name="action_edit_config">Editează config</string>
+    <string name="action_reload_demo">Reîncarcă demo</string>
+    <string name="action_clear_metrics">Șterge toate metricele locale</string>
+    <string name="footer">v0.1 smoke · local-first · niciun dat nu părăsește telefonul</string>
+
+    <string name="config_screen_subtitle">Configurare locală · validare schema 1</string>
+    <string name="close">Închide</string>
+    <string name="config_hint">Lipește aici conținutul fișierului. Verific imediat ID-urile, metricele, planurile, programul și suprascrierile.</string>
+    <string name="json">JSON</string>
+    <string name="action_restore">Restaurează</string>
+    <string name="action_save_reload">Salvează și reîncarcă</string>
+    <string name="invalid_configuration">Configurație nevalidă</string>
+
+    <!-- History -->
+    <string name="history_kicker">ISTORIC</string>
+    <string name="history_heading">Metrice trecute</string>
+    <string name="history_range">Ultimele %1$d zile · %2$s</string>
+    <string name="range_chip">%1$d z</string>
+    <string name="history_loading">Încarc istoricul…</string>
+    <string name="history_empty">Nicio dată: înregistrează o valoare din widget și revino.</string>
+    <string name="history_legend">Pătrat gol: nu era în planul acelei zile. Pal: planificat, dar neînregistrat. Plin: făcut. La rating, culoarea se intensifică odată cu nota.</string>
+    <string name="history_metric_days">%1$d/%2$d zile</string>
+    <string name="history_average">★ %1$s</string>
+    <string name="history_recent">ULTIMELE ZILE</string>
+    <string name="history_today">azi</string>
+
+    <!-- Sync -->
+    <string name="sync_title">Sincronizare GitHub</string>
+    <string name="pat_label">GitHub Personal Access Token</string>
+    <string name="pat_help">Cum creezi un PAT</string>
+    <string name="action_show">Arată</string>
+    <string name="action_hide">Ascunde</string>
+    <string name="pat_requirement">PAT-ul are nevoie de Contents: write pentru a trimite actualizările.</string>
+    <string name="repo_section">Repository</string>
+    <string name="repo_owner">Owner</string>
+    <string name="repo_name">Nume</string>
+    <string name="repo_branch">Branch</string>
+    <string name="habitcommit_path">Calea HabitCommit</string>
+    <string name="action_change_repo">Schimbă repo</string>
+    <string name="action_connect">Conectează</string>
+    <string name="action_checking">Verific…</string>
+    <string name="action_sync_now">Sincronizează acum</string>
+    <string name="action_download_config">Descarcă habits.json</string>
+    <string name="action_disconnect">Deconectează repo</string>
+    <string name="sync_queued">În coadă: %1$d</string>
+    <string name="sync_last_at">ultima sincronizare %1$s</string>
+    <string name="sync_queued_toast">Sincronizare în coadă</string>
+    <string name="sync_disconnected_toast">Sincronizare deconectată. Datele locale rămân.</string>
+    <string name="pick_repo_title">Alege repo</string>
+    <string name="repo_private">privat</string>
+    <string name="repo_public">public</string>
+    <string name="download_title">Descarci habits.json?</string>
+    <string name="download_body">Fișierul din repo va înlocui configurația locală după validare. Valorile înregistrate nu sunt afectate.</string>
+    <string name="action_download">Descarcă</string>
+    <string name="action_cancel">Anulează</string>
+    <string name="config_pulled">habits.json actualizat din repo</string>
+    <string name="error_token_required">Introdu un PAT GitHub</string>
+    <string name="error_no_repo">PAT-ul nu vede niciun repository. Adaugă unul tokenului pe GitHub și încearcă din nou.</string>
+    <string name="error_verification_failed">Verificare eșuată</string>
+    <string name="error_save_failed">Salvare eșuată</string>
+    <string name="error_no_write">Tokenul nu are permisiune de scriere pe %1$s</string>
+    <string name="error_download_failed">Descărcare eșuată</string>
+    <string name="error_invalid_repo">Repo nevalid</string>
+
+    <!-- Sync engine and network errors -->
+    <string name="sync_saved">Conectat la %1$s (%2$s, %3$s/)</string>
+    <string name="sync_disconnected">Sincronizare deconectată</string>
+    <string name="sync_all_synced">Totul sincronizat</string>
+    <string name="sync_syncing_remaining">Sincronizez… %1$d rămase</string>
+    <string name="sync_token_missing">Token lipsă: reconectează repo-ul</string>
+    <string name="sync_failed">Sincronizare eșuată</string>
+    <string name="error_sync_not_configured">Sincronizarea nu este configurată</string>
+    <string name="error_token_invalid">Token nevalid sau expirat. Generează un PAT nou.</string>
+    <string name="error_permissions">Permisiuni insuficiente sau rate limit. Sunt necesare Contents: Read and write + Metadata: Read.</string>
+    <string name="error_repo_not_found">%1$s. Verifică repo-ul și permisiunile tokenului.</string>
+    <string name="error_network">Eroare de rețea: %1$s</string>
+    <string name="error_file_too_large">Fișier journal prea mare</string>
+    <string name="error_commit_rejected">Commit respins</string>
+    <string name="error_journal_conflict">Jurnal actualizat de altă sincronizare</string>
+    <string name="error_config_missing">%1$s nu există pe branch-ul %2$s</string>
+    <string name="error_not_a_file">%1$s nu este un fișier</string>
+    <string name="error_owner_invalid">Owner GitHub nevalid</string>
+    <string name="error_repo_invalid">Nume de repo nevalid</string>
+    <string name="error_branch_invalid">Branch nevalid</string>
+    <string name="error_journal_dir_invalid">Folder journal nevalid</string>
+</resources>

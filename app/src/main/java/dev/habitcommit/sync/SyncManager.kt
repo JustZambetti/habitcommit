@@ -1,6 +1,7 @@
 package dev.habitcommit.sync
 
 import android.content.Context
+import dev.habitcommit.R
 import dev.habitcommit.data.CheckEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,10 +49,18 @@ class SyncManager(
     fun saveConnection(target: GithubTarget, token: String?): Result<Unit> {
         return try {
             if (!token.isNullOrBlank()) tokenStore.save(token)
-            require(tokenStore.hasToken()) { "Inserisci un token GitHub" }
+            require(tokenStore.hasToken()) { appContext.getString(R.string.error_token_required) }
             settings.saveTarget(target)
             prefs.edit()
-                .putString(KEY_MESSAGE, "Collegato a ${target.repoFullName}")
+                .putString(
+                    KEY_MESSAGE,
+                    appContext.getString(
+                        R.string.sync_saved,
+                        target.repoFullName,
+                        target.branch,
+                        target.journalDir,
+                    ),
+                )
                 .putBoolean(KEY_OK, true)
                 .remove(KEY_SYNC_AT)
                 .apply()
@@ -59,7 +68,11 @@ class SyncManager(
             GithubSyncScheduler.request(appContext)
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(IllegalArgumentException(e.message ?: "Configurazione non valida"))
+            Result.failure(
+                IllegalArgumentException(
+                    e.message ?: appContext.getString(R.string.invalid_configuration),
+                ),
+            )
         }
     }
 
@@ -67,7 +80,7 @@ class SyncManager(
         tokenStore.clear()
         settings.clearTarget()
         prefs.edit()
-            .putString(KEY_MESSAGE, "Sync scollegata")
+            .putString(KEY_MESSAGE, appContext.getString(R.string.sync_disconnected))
             .putBoolean(KEY_OK, true)
             .remove(KEY_SYNC_AT)
             .apply()
@@ -75,16 +88,22 @@ class SyncManager(
     }
 
     fun verify(target: GithubTarget, token: String): Result<GithubClient.RepoInfo> {
-        if (token.isBlank()) return Result.failure(IllegalArgumentException("Inserisci un token GitHub"))
-        return GithubClient(token.trim(), target).verify()
+        if (token.isBlank()) {
+            return Result.failure(IllegalArgumentException(appContext.getString(R.string.error_token_required)))
+        }
+        return GithubClient(appContext.resources, token.trim(), target).verify()
     }
 
     fun downloadConfig(): Result<String> {
         val target = settings.target()
-            ?: return Result.failure(IllegalStateException("Sync non configurata"))
+            ?: return Result.failure(
+                IllegalStateException(appContext.getString(R.string.error_sync_not_configured)),
+            )
         val token = tokenStore.load()
-            ?: return Result.failure(IllegalStateException("Token mancante: ricollega il repo"))
-        return GithubClient(token, target).downloadConfig()
+            ?: return Result.failure(
+                IllegalStateException(appContext.getString(R.string.sync_token_missing)),
+            )
+        return GithubClient(appContext.resources, token, target).downloadConfig()
     }
 
     fun token(): String? = tokenStore.load()
@@ -93,7 +112,11 @@ class SyncManager(
         prefs.edit()
             .putString(
                 KEY_MESSAGE,
-                if (pendingLeft > 0) "Sincronizzo… $pendingLeft rimasti" else "Tutto sincronizzato",
+                if (pendingLeft > 0) {
+                    appContext.getString(R.string.sync_syncing_remaining, pendingLeft)
+                } else {
+                    appContext.getString(R.string.sync_all_synced)
+                },
             )
             .putBoolean(KEY_OK, true)
             .putLong(KEY_SYNC_AT, Instant.now().epochSecond)

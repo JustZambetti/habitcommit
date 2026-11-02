@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,11 +39,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.habitcommit.R
 import dev.habitcommit.data.HabitRepository
 import dev.habitcommit.sync.GithubClient
 import dev.habitcommit.sync.GithubSyncScheduler
@@ -50,11 +55,19 @@ import dev.habitcommit.sync.GithubTarget
 import dev.habitcommit.sync.RepoSummary
 import dev.habitcommit.sync.SyncManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+/** Fine-grained PAT creation page on GitHub. */
+private const val PAT_CREATE_URL = "https://github.com/settings/tokens?type=beta"
+
+/** Shortest plausible token: classic PATs are 40 chars, fine-grained ones longer. */
+private const val MIN_TOKEN_LENGTH = 20
 
 @Composable
 fun SyncScreen(
@@ -66,16 +79,33 @@ fun SyncScreen(
     val context = LocalContext.current
     val status by syncManager.status.collectAsState()
     val scope = rememberCoroutineScope()
-    val current = remember { syncManager.settings.target() }
+    val uriHandler = LocalUriHandler.current
 
+    val savedTarget = remember { syncManager.settings.target() }
     var token by remember { mutableStateOf("") }
     var showToken by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var isError by remember { mutableStateOf(false) }
     var confirmPull by remember { mutableStateOf(false) }
-    var repos by remember { mutableStateOf<List<RepoSummary>?>(null) }
-    var tokenForPicker by remember { mutableStateOf<String?>(null) }
+    var pickerOpen by remember { mutableStateOf(false) }
+
+    var measuredRepos by remember { mutableStateOf<List<RepoSummary>>(emptyList()) }
+    var proposal by remember {
+        mutableStateOf(
+            savedTarget?.let {
+                RepoSummary(
+                    owner = it.owner,
+                    name = it.repo,
+                    fullName = it.repoFullName,
+                    isPrivate = false,
+                    defaultBranch = it.branch,
+                )
+            },
+        )
+    }
+    var branch by remember { mutableStateOf(savedTarget?.branch ?: "") }
+    var path by remember { mutableStateOf(savedTarget?.journalDir ?: "") }
 
     // The token field must not appear in screenshots or the recents thumbnail.
     DisposableEffect(Unit) {
@@ -89,49 +119,99 @@ fun SyncScreen(
         isError = error
     }
 
-    suspend fun connect(summary: RepoSummary, rawToken: String) {
-        busy = true
-        val parsed = GithubTarget.parse(
-            summary.owner,
-            summary.name,
-            GithubTarget.DEFAULT_BRANCH,
-            GithubTarget.DEFAULT_JOURNAL_DIR,
-        )
-        val target = parsed.getOrElse {
-            report(it.message ?: "Repo non valido", true)
-            busy = false
-            return
+    fun propose(summary: RepoSummary) {
+        proposal = summary
+        branch = summary.defaultBranch
+        path = GithubTarget.DEFAULT_JOURNAL_DIR
+    }
+
+    // Search as soon as a plausible token is entered, debounced across keystrokes.
+    val candidate = token.trim()
+    LaunchedEffect(candidate) {
+        if (candidate.length < MIN_TOKEN_LENGTH) return@LaunchedEffect
+        delay(700)
+        val loaded = withContext(Dispatchers.IO) {
+            GithubClient.listRepositories(context.resources, candidate)
         }
-        val verified = withContext(Dispatchers.IO) { syncManager.verify(target, rawToken) }
-        verified.fold(
-            onSuccess = { info ->
-                if (!info.canPush) {
-                    report("Il token non ha permesso di scrittura su ${info.fullName}", true)
+        loaded.fold(
+            onSuccess = { list ->
+                measuredRepos = list
+                val first = list.firstOrNull()
+                if (first == null) {
+                    report(context.getString(R.string.error_no_repo), true)
                 } else {
-                    // Follow the repository's default branch instead of assuming main.
-                    val finalTarget = GithubTarget.parse(
-                        summary.owner,
-                        summary.name,
-                        info.defaultBranch,
-                        GithubTarget.DEFAULT_JOURNAL_DIR,
-                    ).getOrDefault(target)
-                    val saved = syncManager.saveConnection(finalTarget, rawToken)
-                    saved.fold(
-                        onSuccess = {
-                            report(
-                                "Collegato a ${info.fullName} (${finalTarget.branch}, " +
-                                    "${finalTarget.journalDir}/)",
-                                false,
-                            )
-                            token = ""
-                        },
-                        onFailure = { report(it.message ?: "Salvataggio fallito", true) },
-                    )
+                    propose(first)
+                    message = null
                 }
             },
-            onFailure = { report(it.message ?: "Verifica fallita", true) },
+            onFailure = { report(it.message ?: context.getString(R.string.error_verification_failed), true) },
         )
-        busy = false
+    }
+
+    fun connect() {
+        val target = proposal
+        val rawToken = token.trim().ifBlank { syncManager.token() }
+        when {
+            target == null -> report(context.getString(R.string.error_token_required), true)
+            rawToken.isNullOrBlank() -> report(context.getString(R.string.error_token_required), true)
+            !GithubTarget.validBranch(branch.trim()) ->
+                report(context.getString(R.string.error_branch_invalid), true)
+            !GithubTarget.validPath(path.trim().trim('/')) ->
+                report(context.getString(R.string.error_journal_dir_invalid), true)
+            else -> {
+                busy = true
+                scope.launch {
+                    val parsed = GithubTarget.parse(target.owner, target.name, branch, path)
+                    val valid = parsed.getOrNull()
+                    if (valid == null) {
+                        report(context.getString(R.string.error_invalid_repo), true)
+                        busy = false
+                        return@launch
+                    }
+                    val verified = withContext(Dispatchers.IO) { syncManager.verify(valid, rawToken) }
+                    verified.fold(
+                        onSuccess = { info ->
+                            if (!info.canPush) {
+                                report(
+                                    context.getString(R.string.error_no_write, info.fullName),
+                                    true,
+                                )
+                            } else {
+                                syncManager.saveConnection(valid, rawToken).fold(
+                                    onSuccess = {
+                                        token = ""
+                                        measuredRepos = emptyList()
+                                        report(
+                                            context.getString(
+                                                R.string.sync_saved,
+                                                info.fullName,
+                                                valid.branch,
+                                                valid.journalDir,
+                                            ),
+                                            false,
+                                        )
+                                    },
+                                    onFailure = {
+                                        report(
+                                            it.message
+                                                ?: context.getString(R.string.error_save_failed),
+                                            true,
+                                        )
+                                    },
+                                )
+                            }
+                        },
+                        onFailure = {
+                            report(
+                                it.message ?: context.getString(R.string.error_verification_failed),
+                                true,
+                            )
+                        },
+                    )
+                    busy = false
+                }
+            }
+        }
     }
 
     Column(
@@ -145,59 +225,60 @@ fun SyncScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Sync GitHub",
+                    text = stringResource(R.string.sync_title),
                     fontSize = 22.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                    fontWeight = FontWeight.Medium,
                 )
                 Text(
                     text = if (status.configured) {
                         "${status.repoLabel} · ${status.branch} · ${status.journalDir}/"
                     } else {
-                        "Nessun repo collegato"
+                        stringResource(R.string.not_connected)
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp,
                 )
             }
-            TextButton(onClick = onClose) { Text("Chiudi") }
+            TextButton(onClick = onClose) { Text(stringResource(R.string.close)) }
         }
 
-        Spacer(Modifier.height(10.dp))
-        Text(
-            text = "Ogni valore registrato viene salvato in locale e poi inviato come un " +
-                "commit separato in journal/AAAA-MM/<device>.jsonl. Le note non finiscono " +
-                "mai nei messaggi di commit.",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 12.sp,
-            lineHeight = 17.sp,
-        )
-
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(12.dp))
         OutlinedTextField(
             value = token,
             onValueChange = { token = it; message = null },
             modifier = Modifier.fillMaxWidth(),
-            label = {
-                Text(if (status.configured) "Nuovo PAT (lascia vuoto per tenere quello salvato)" else "PAT fine-grained")
-            },
+            label = { Text(stringResource(R.string.pat_label)) },
             singleLine = true,
             visualTransformation = if (showToken) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             trailingIcon = {
                 TextButton(onClick = { showToken = !showToken }) {
-                    Text(if (showToken) "Nascondi" else "Mostra", fontSize = 11.sp)
+                    Text(
+                        text = stringResource(
+                            if (showToken) R.string.action_hide else R.string.action_show,
+                        ),
+                        fontSize = 11.sp,
+                    )
                 }
             },
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(4.dp))
+        TextButton(
+            onClick = { uriHandler.openUri(PAT_CREATE_URL) },
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.pat_help),
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
         Text(
-            text = "Il PAT deve avere Contents: Read and write e Metadata: Read. Scegli " +
-                "\"Only select repositories\" e limita il token al repo dei dati: l'app userà " +
-                "il branch predefinito del repo e la cartella journal/.",
+            text = stringResource(R.string.pat_requirement),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 10.sp,
-            lineHeight = 15.sp,
+            lineHeight = 14.sp,
         )
 
         message?.let {
@@ -210,146 +291,149 @@ fun SyncScreen(
             )
         }
 
-        Spacer(Modifier.height(14.dp))
-        Button(
-            onClick = {
-                val effectiveToken = token.ifBlank { syncManager.token() }
-                if (effectiveToken.isNullOrBlank()) {
-                    report("Inserisci un PAT GitHub", true)
-                    return@Button
-                }
-                busy = true
-                message = null
-                scope.launch {
-                    val loaded = withContext(Dispatchers.IO) {
-                        GithubClient.listRepositories(effectiveToken)
+        proposal?.let { current ->
+            Spacer(Modifier.height(18.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.repo_section),
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 1.5.sp,
+                )
+                if (measuredRepos.size > 1) {
+                    TextButton(onClick = { pickerOpen = true }) {
+                        Text(stringResource(R.string.action_change_repo), fontSize = 11.sp)
                     }
-                    loaded.fold(
-                        onSuccess = { list ->
-                            when {
-                                list.isEmpty() -> {
-                                    report(
-                                        "Il PAT non vede nessun repository. Aggiungine uno al " +
-                                            "token su GitHub e riprova.",
-                                        true,
-                                    )
-                                    busy = false
-                                }
-                                list.size == 1 -> {
-                                    busy = false
-                                    connect(list.first(), effectiveToken)
-                                }
-                                else -> {
-                                    tokenForPicker = effectiveToken
-                                    repos = list
-                                    busy = false
-                                }
-                            }
-                        },
-                        onFailure = {
-                            report(it.message ?: "Verifica fallita", true)
-                            busy = false
-                        },
-                    )
                 }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !busy,
-        ) {
-            Text(if (busy) "Verifico…" else "Collega repo")
-        }
-
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(
-                onClick = {
-                    GithubSyncScheduler.request(context)
-                    report("Sincronizzazione in coda", false)
-                },
-                modifier = Modifier.weight(1f),
-                enabled = status.configured && !busy,
-            ) {
-                Text("Sincronizza ora", fontSize = 12.sp)
             }
-            OutlinedButton(
-                onClick = { confirmPull = true },
-                modifier = Modifier.weight(1f),
-                enabled = status.configured && !busy,
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = current.owner,
+                    onValueChange = {},
+                    modifier = Modifier.weight(1f),
+                    label = { Text(stringResource(R.string.repo_owner), fontSize = 11.sp) },
+                    singleLine = true,
+                    enabled = false,
+                )
+                OutlinedTextField(
+                    value = current.name,
+                    onValueChange = {},
+                    modifier = Modifier.weight(1f),
+                    label = { Text(stringResource(R.string.repo_name), fontSize = 11.sp) },
+                    singleLine = true,
+                    enabled = false,
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = branch,
+                    onValueChange = { branch = it; message = null },
+                    modifier = Modifier.weight(1f),
+                    label = { Text(stringResource(R.string.repo_branch), fontSize = 11.sp) },
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = path,
+                    onValueChange = { path = it; message = null },
+                    modifier = Modifier.weight(1f),
+                    label = { Text(stringResource(R.string.habitcommit_path), fontSize = 11.sp) },
+                    singleLine = true,
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = { connect() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !busy,
             ) {
-                Text("Scarica habits.json", fontSize = 12.sp)
+                Text(if (busy) stringResource(R.string.action_checking) else stringResource(R.string.action_connect))
             }
         }
 
         if (status.configured) {
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        GithubSyncScheduler.request(context)
+                        report(context.getString(R.string.sync_queued_toast), false)
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = !busy,
+                ) {
+                    Text(stringResource(R.string.action_sync_now), fontSize = 12.sp)
+                }
+                OutlinedButton(
+                    onClick = { confirmPull = true },
+                    modifier = Modifier.weight(1f),
+                    enabled = !busy,
+                ) {
+                    Text(stringResource(R.string.action_download_config), fontSize = 12.sp)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
             Text(
                 text = buildString {
-                    append("In coda: ${status.pending}")
-                    status.lastSyncAt?.let { append(" · ultima sync ${formatInstant(it)}") }
+                    append(stringResource(R.string.sync_queued, status.pending))
+                    status.lastSyncAt?.let {
+                        append(" · ")
+                        append(stringResource(R.string.sync_last_at, formatInstant(it)))
+                    }
                 },
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 11.sp,
             )
-            status.lastMessage?.let {
+            if (!status.lastOk && status.lastMessage != null) {
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = it,
-                    color = if (status.lastOk) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    },
+                    text = status.lastMessage.orEmpty(),
+                    color = MaterialTheme.colorScheme.error,
                     fontSize = 11.sp,
                 )
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(6.dp))
             TextButton(
                 onClick = {
                     syncManager.disconnect()
                     token = ""
-                    report("Sync scollegata. I dati locali restano.", false)
+                    measuredRepos = emptyList()
+                    report(context.getString(R.string.sync_disconnected_toast), false)
                 },
             ) {
-                Text("Scollega repo")
+                Text(stringResource(R.string.action_disconnect))
             }
         }
 
         Spacer(Modifier.height(24.dp))
     }
 
-    repos?.let { list ->
+    if (pickerOpen) {
         AlertDialog(
-            onDismissRequest = { repos = null },
-            title = { Text("Scegli repo") },
+            onDismissRequest = { pickerOpen = false },
+            title = { Text(stringResource(R.string.pick_repo_title)) },
             text = {
                 Column(
                     modifier = Modifier
                         .heightIn(max = 420.dp)
                         .verticalScroll(rememberScrollState()),
                 ) {
-                    Text(
-                        text = "${list.size} repo visibili al token. Per evitare di scegliere, " +
-                            "limita il PAT a un solo repository.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    list.forEach { summary ->
+                    measuredRepos.forEach { summary ->
                         TextButton(
                             onClick = {
-                                val picked = summary
-                                val rawToken = tokenForPicker
-                                repos = null
-                                if (rawToken != null) {
-                                    scope.launch { connect(picked, rawToken) }
-                                }
+                                pickerOpen = false
+                                propose(summary)
                             },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(summary.fullName, fontSize = 13.sp)
                                 Text(
-                                    text = if (summary.isPrivate) "privato" else "pubblico",
+                                    text = stringResource(
+                                        if (summary.isPrivate) R.string.repo_private else R.string.repo_public,
+                                    ),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 10.sp,
                                 )
@@ -359,7 +443,9 @@ fun SyncScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { repos = null }) { Text("Chiudi") }
+                TextButton(onClick = { pickerOpen = false }) {
+                    Text(stringResource(R.string.close))
+                }
             },
         )
     }
@@ -367,13 +453,8 @@ fun SyncScreen(
     if (confirmPull) {
         AlertDialog(
             onDismissRequest = { confirmPull = false },
-            title = { Text("Scaricare habits.json?") },
-            text = {
-                Text(
-                    "Il file del repo sostituirà la configurazione locale dopo la validazione. " +
-                        "I valori registrati non vengono toccati.",
-                )
-            },
+            title = { Text(stringResource(R.string.download_title)) },
+            text = { Text(stringResource(R.string.download_body)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -386,21 +467,35 @@ fun SyncScreen(
                                     val saved = repository.saveConfig(text)
                                     saved.fold(
                                         onSuccess = {
-                                            report("habits.json aggiornato dal repo", false)
+                                            report(context.getString(R.string.config_pulled), false)
                                             onConfigReplaced()
                                         },
-                                        onFailure = { report(it.message ?: "Config non valida", true) },
+                                        onFailure = {
+                                            report(
+                                                it.message
+                                                    ?: context.getString(R.string.invalid_configuration),
+                                                true,
+                                            )
+                                        },
                                     )
                                 },
-                                onFailure = { report(it.message ?: "Download fallito", true) },
+                                onFailure = {
+                                    report(
+                                        it.message
+                                            ?: context.getString(R.string.error_download_failed),
+                                        true,
+                                    )
+                                },
                             )
                             busy = false
                         }
                     },
-                ) { Text("Scarica") }
+                ) { Text(stringResource(R.string.action_download)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmPull = false }) { Text("Annulla") }
+                TextButton(onClick = { confirmPull = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             },
         )
     }
@@ -413,6 +508,6 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 }
 
 private fun formatInstant(instant: Instant): String =
-    DateTimeFormatter.ofPattern("d MMM HH:mm")
+    DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.getDefault())
         .withZone(ZoneId.systemDefault())
         .format(instant)

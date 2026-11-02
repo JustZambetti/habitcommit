@@ -48,12 +48,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.habitcommit.R
 import dev.habitcommit.data.CheckType
 import dev.habitcommit.data.CheckUi
 import dev.habitcommit.data.HabitRepository
@@ -166,7 +169,10 @@ fun HabitApp(
             val state = today
             if (state == null) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Carico il piano di oggi…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = stringResource(R.string.loading_plan),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             } else {
                 Column(
@@ -238,7 +244,7 @@ fun HabitApp(
 
                 Spacer(Modifier.height(24.dp))
                 Text(
-                    text = "v0.1 smoke · local-first · nessun dato lascia il telefono",
+                    text = stringResource(R.string.footer),
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 10.sp,
@@ -270,7 +276,7 @@ private fun AppHeader(
                 letterSpacing = 2.sp,
             )
             Text(
-                text = "Oggi",
+                text = stringResource(R.string.today_title),
                 fontSize = 34.sp,
                 fontWeight = FontWeight.Medium,
                 letterSpacing = (-1).sp,
@@ -282,10 +288,10 @@ private fun AppHeader(
             )
         }
         TextButton(onClick = onOpenHistory) {
-            Text("Storico")
+            Text(stringResource(R.string.history_title))
         }
         TextButton(onClick = onOpenConfig) {
-            Text("Config")
+            Text(stringResource(R.string.config_title))
         }
     }
 }
@@ -304,7 +310,7 @@ private fun DemoBanner(onClear: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "DEMO",
+                text = stringResource(R.string.demo_badge),
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Medium,
@@ -312,13 +318,13 @@ private fun DemoBanner(onClear: () -> Unit) {
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = "Dati di esempio locali",
+                text = stringResource(R.string.demo_local),
                 modifier = Modifier.weight(1f),
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 fontSize = 12.sp,
             )
             TextButton(onClick = onClear) {
-                Text("Azzera")
+                Text(stringResource(R.string.action_clear))
             }
         }
     }
@@ -333,7 +339,7 @@ private fun ErrorCard(error: String, onOpenConfig: () -> Unit) {
     ) {
         Column(Modifier.padding(12.dp)) {
             Text(
-                text = "La config non è valida",
+                text = stringResource(R.string.config_invalid_title),
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.sp,
@@ -345,7 +351,7 @@ private fun ErrorCard(error: String, onOpenConfig: () -> Unit) {
                 fontSize = 11.sp,
             )
             TextButton(onClick = onOpenConfig) {
-                Text("Apri habits.json")
+                Text(stringResource(R.string.action_open_habits_json))
             }
         }
     }
@@ -373,7 +379,7 @@ private fun TodayCard(
             Row(verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "PIANO DI OGGI",
+                        text = stringResource(R.string.plan_today),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Medium,
@@ -417,7 +423,7 @@ private fun TodayCard(
 
             if (state.metrics.isEmpty()) {
                 Text(
-                    text = "Nessuna metrica per questo piano.",
+                    text = stringResource(R.string.no_metrics_for_plan),
                     modifier = Modifier.padding(vertical = 12.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 13.sp,
@@ -442,13 +448,13 @@ private fun TodayCard(
             Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "${state.streak} giorni di fila",
+                    text = pluralStringResource(R.plurals.streak_days, state.streak, state.streak),
                     modifier = Modifier.weight(1f),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    text = "salvato in locale ✓",
+                    text = stringResource(R.string.saved_locally),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 10.sp,
                 )
@@ -462,7 +468,7 @@ private fun TodayCard(
                 onClick = onOpenConfig,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Modifica habits.json")
+                Text(stringResource(R.string.action_edit_habits))
             }
         }
     }
@@ -470,12 +476,14 @@ private fun TodayCard(
 
 @Composable
 private fun SourcePill(state: TodayState) {
-    val label = when (state.source) {
-        PlanSource.DATE_OVERRIDE -> "OVERRIDE DI OGGI"
-        PlanSource.WEEKDAY -> "PIANO DEL GIORNO · HABITS.JSON"
-        PlanSource.DEFAULT -> "PIANO PREDEFINITO"
-        PlanSource.LOCAL_OVERRIDE -> "PIANO · HABITS.JSON"
-    }
+    val label = stringResource(
+        when (state.source) {
+            PlanSource.DATE_OVERRIDE -> R.string.source_date_override
+            PlanSource.WEEKDAY -> R.string.source_weekday
+            PlanSource.DEFAULT -> R.string.source_default
+            PlanSource.LOCAL_OVERRIDE -> R.string.source_local_override
+        },
+    )
     Surface(
         shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.secondaryContainer,
@@ -588,7 +596,7 @@ private fun TomorrowRow(state: TodayState) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "DOMANI",
+                    text = stringResource(R.string.tomorrow),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 8.sp,
                     fontWeight = FontWeight.Medium,
@@ -626,13 +634,13 @@ private fun WidgetCard(context: Context) {
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(
-                text = "Widget sulla home",
+                text = stringResource(R.string.widget_card_title),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Ogni tap sul widget aggiorna subito i dati. Aggiungilo alla home:",
+                text = stringResource(R.string.widget_card_desc),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp,
                 lineHeight = 17.sp,
@@ -666,7 +674,7 @@ private fun WidgetCard(context: Context) {
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Se il launcher non mostra la richiesta: tieni premuto sulla home → Widget → HabitCommit.",
+                text = stringResource(R.string.widget_pin_note),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 10.sp,
                 lineHeight = 14.sp,
@@ -698,7 +706,7 @@ private fun pinWidget(context: Context, receiver: Class<*>) {
     } else {
         Toast.makeText(
             context,
-            "Il launcher non supporta l'aggiunta automatica: usa Widget → HabitCommit.",
+            context.getString(R.string.widget_pin_unsupported),
             Toast.LENGTH_LONG,
         ).show()
     }
@@ -720,7 +728,7 @@ private fun GitHubCard(status: SyncStatus, onOpen: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Sync GitHub",
+                        text = stringResource(R.string.sync_card_title),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                     )
@@ -728,7 +736,7 @@ private fun GitHubCard(status: SyncStatus, onOpen: () -> Unit) {
                         text = if (status.configured) {
                             "${status.repoLabel} · ${status.branch} · ${status.journalDir}/"
                         } else {
-                            "Non collegata"
+                            stringResource(R.string.not_connected)
                         },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp,
@@ -736,7 +744,11 @@ private fun GitHubCard(status: SyncStatus, onOpen: () -> Unit) {
                 }
                 if (status.pending > 0) {
                     Text(
-                        text = "${status.pending} in coda",
+                        text = pluralStringResource(
+                            R.plurals.pending_count,
+                            status.pending,
+                            status.pending,
+                        ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 10.sp,
                     )
@@ -745,7 +757,7 @@ private fun GitHubCard(status: SyncStatus, onOpen: () -> Unit) {
             Spacer(Modifier.height(8.dp))
             Text(
                 text = status.lastMessage
-                    ?: "Collega un repo privato per tenere la cronologia in git. I valori restano locali finché non c'è rete.",
+                    ?: stringResource(R.string.sync_card_desc),
                 color = if (status.configured && !status.lastOk) {
                     MaterialTheme.colorScheme.error
                 } else {
@@ -757,7 +769,13 @@ private fun GitHubCard(status: SyncStatus, onOpen: () -> Unit) {
             Spacer(Modifier.height(12.dp))
             Row {
                 Button(onClick = onOpen, modifier = Modifier.weight(1f)) {
-                    Text(if (status.configured) "Gestisci sync" else "Collega repo")
+                    Text(
+                        if (status.configured) {
+                            stringResource(R.string.sync_manage)
+                        } else {
+                            stringResource(R.string.sync_connect)
+                        },
+                    )
                 }
                 if (status.configured) {
                     Spacer(Modifier.width(8.dp))
@@ -765,7 +783,7 @@ private fun GitHubCard(status: SyncStatus, onOpen: () -> Unit) {
                         onClick = { GithubSyncScheduler.request(context) },
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("Sincronizza")
+                        Text(stringResource(R.string.sync_now_short))
                     }
                 }
             }
@@ -798,7 +816,7 @@ private fun LocalConfigCard(
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        text = "Metriche, piani e schedule",
+                        text = stringResource(R.string.config_card_subtitle),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp,
                     )
@@ -811,7 +829,7 @@ private fun LocalConfigCard(
             }
             Spacer(Modifier.height(10.dp))
             Text(
-                text = "Il piano di oggi viene risolto da questo file. Con la sync attiva ogni valore registrato viene accodato e poi committato sul tuo repo GitHub.",
+                text = stringResource(R.string.config_card_desc),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp,
                 lineHeight = 17.sp,
@@ -819,15 +837,15 @@ private fun LocalConfigCard(
             Spacer(Modifier.height(12.dp))
             Row {
                 Button(onClick = onEdit, modifier = Modifier.weight(1f)) {
-                    Text("Modifica config")
+                    Text(stringResource(R.string.action_edit_config))
                 }
                 Spacer(Modifier.width(8.dp))
                 OutlinedButton(onClick = onSeedDemo, modifier = Modifier.weight(1f)) {
-                    Text("Ricarica demo")
+                    Text(stringResource(R.string.action_reload_demo))
                 }
             }
             TextButton(onClick = onClear) {
-                Text("Azzera tutte le metriche locali")
+                Text(stringResource(R.string.action_clear_metrics))
             }
         }
     }
@@ -841,6 +859,7 @@ private fun ConfigScreen(
 ) {
     var text by remember(initialText) { mutableStateOf(initialText) }
     var error by remember { mutableStateOf<String?>(null) }
+    val invalidConfiguration = stringResource(R.string.invalid_configuration)
 
     Column(
         modifier = Modifier
@@ -857,18 +876,18 @@ private fun ConfigScreen(
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    text = "Configurazione locale · validazione allo schema 1",
+                    text = stringResource(R.string.config_screen_subtitle),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp,
                 )
             }
             TextButton(onClick = onClose) {
-                Text("Chiudi")
+                Text(stringResource(R.string.close))
             }
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Incolla qui il contenuto del file. Controllo subito ID, metriche, piani, schedule e override.",
+            text = stringResource(R.string.config_hint),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 11.sp,
             lineHeight = 16.sp,
@@ -888,7 +907,7 @@ private fun ConfigScreen(
                 fontSize = 11.sp,
             ),
             isError = error != null,
-            label = { Text("JSON") },
+            label = { Text(stringResource(R.string.json)) },
         )
         error?.let {
             Spacer(Modifier.height(6.dp))
@@ -907,26 +926,26 @@ private fun ConfigScreen(
                 },
                 modifier = Modifier.weight(1f),
             ) {
-                Text("Ripristina")
+                Text(stringResource(R.string.action_restore))
             }
             Spacer(Modifier.width(8.dp))
             Button(
                 onClick = {
                     val result = onSave(text)
                     result.onFailure {
-                        error = it.message ?: "Configurazione non valida"
+                        error = it.message ?: invalidConfiguration
                     }
                 },
                 modifier = Modifier.weight(2f),
             ) {
-                Text("Salva e ricarica")
+                Text(stringResource(R.string.action_save_reload))
             }
         }
     }
 }
 
-private val italianDate = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN)
-
 private fun formatDate(date: LocalDate): String {
-    return date.format(italianDate).replaceFirstChar { it.titlecase(Locale.ITALIAN) }
+    val locale = Locale.getDefault()
+    return date.format(DateTimeFormatter.ofPattern("EEEE d MMMM", locale))
+        .replaceFirstChar { it.titlecase(locale) }
 }

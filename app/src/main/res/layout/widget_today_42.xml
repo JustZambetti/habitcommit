@@ -100,7 +100,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="3dp"
             android:maxLines="1"
-            android:text="salvato ✓"
+            android:text="@string/widget_saved"
             android:textColor="#55241F19"
             android:textSize="8.5sp" />
     </LinearLayout>

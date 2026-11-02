@@ -3,6 +3,6 @@
     android:layout_width="match_parent"
     android:layout_height="36dp"
     android:gravity="center_vertical"
-    android:text="Nessuna metrica per oggi"
+    android:text="@string/widget_empty"
     android:textColor="#8A241F19"
     android:textSize="12sp" />

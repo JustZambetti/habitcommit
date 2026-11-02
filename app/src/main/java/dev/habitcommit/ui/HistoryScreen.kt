@@ -37,8 +37,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.habitcommit.R
 import dev.habitcommit.data.CheckType
 import dev.habitcommit.data.HabitRepository
 import dev.habitcommit.data.HistoryDay
@@ -71,27 +73,27 @@ fun HistoryScreen(repository: HabitRepository, onClose: () -> Unit) {
         Row(verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "STORICO",
+                    text = stringResource(R.string.history_kicker),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                     letterSpacing = 2.sp,
                 )
                 Text(
-                    text = "Metriche passate",
+                    text = stringResource(R.string.history_heading),
                     fontSize = 30.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                     letterSpacing = (-1).sp,
                 )
                 state?.let {
                     Text(
-                        text = "Ultimi ${range} giorni · ${it.zone.id}",
+                        text = stringResource(R.string.history_range, range, it.zone.id),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp,
                     )
                 }
             }
-            TextButton(onClick = onClose) { Text("Chiudi") }
+            TextButton(onClick = onClose) { Text(stringResource(R.string.close)) }
         }
 
         Spacer(Modifier.height(12.dp))
@@ -100,7 +102,9 @@ fun HistoryScreen(repository: HabitRepository, onClose: () -> Unit) {
                 FilterChip(
                     selected = range == option,
                     onClick = { range = option },
-                    label = { Text("$option g", fontSize = 12.sp) },
+                    label = {
+                        Text(stringResource(R.string.range_chip, option), fontSize = 12.sp)
+                    },
                 )
             }
         }
@@ -109,7 +113,7 @@ fun HistoryScreen(repository: HabitRepository, onClose: () -> Unit) {
         if (current == null) {
             Spacer(Modifier.height(24.dp))
             Text(
-                text = "Carico lo storico…",
+                text = stringResource(R.string.history_loading),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp,
             )
@@ -119,7 +123,7 @@ fun HistoryScreen(repository: HabitRepository, onClose: () -> Unit) {
         if (current.metrics.isEmpty()) {
             Spacer(Modifier.height(24.dp))
             Text(
-                text = "Nessun dato: registra qualche valore dal widget e torna qui.",
+                text = stringResource(R.string.history_empty),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp,
             )
@@ -134,8 +138,7 @@ fun HistoryScreen(repository: HabitRepository, onClose: () -> Unit) {
 
         Spacer(Modifier.height(4.dp))
         Text(
-            text = "Quadrato vuoto: non in piano quel giorno. Chiaro: in piano ma non registrato. " +
-                "Pieno: fatto. Per i rating il colore sale con il voto.",
+            text = stringResource(R.string.history_legend),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 10.sp,
             lineHeight = 14.sp,
@@ -143,7 +146,7 @@ fun HistoryScreen(repository: HabitRepository, onClose: () -> Unit) {
 
         Spacer(Modifier.height(18.dp))
         Text(
-            text = "ULTIMI GIORNI",
+            text = stringResource(R.string.history_recent),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 9.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
@@ -182,8 +185,22 @@ private fun MetricHistoryCard(metric: HistoryMetric, state: HistoryState) {
                 )
                 Text(
                     text = buildString {
-                        append("${metric.activeDays}/${metric.plannedDays} giorni")
-                        metric.average?.let { append(" · ★ ${"%.1f".format(Locale.ITALIAN, it)}") }
+                        append(
+                            stringResource(
+                                R.string.history_metric_days,
+                                metric.activeDays,
+                                metric.plannedDays,
+                            ),
+                        )
+                        metric.average?.let {
+                            append(" · ")
+                            append(
+                                stringResource(
+                                    R.string.history_average,
+                                    "%.1f".format(Locale.getDefault(), it),
+                                ),
+                            )
+                        }
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp,
@@ -253,7 +270,7 @@ private fun StripLabels(days: List<LocalDate>) {
             fontSize = 9.sp,
         )
         Text(
-            text = "oggi",
+            text = stringResource(R.string.history_today),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 9.sp,
         )
@@ -331,12 +348,11 @@ private fun DayHistoryRow(day: HistoryDay, state: HistoryState) {
     }
 }
 
-private val shortDate = DateTimeFormatter.ofPattern("d MMM", Locale.ITALIAN)
-private val dayTitle = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ITALIAN)
-
-private fun formatShortDate(date: LocalDate): String = date.format(shortDate)
+private fun formatShortDate(date: LocalDate): String =
+    date.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()))
 
 private fun formatDayTitle(date: LocalDate): String {
-    val label = date.format(dayTitle)
-    return label.replaceFirstChar { it.titlecase(Locale.ITALIAN) }
+    val locale = Locale.getDefault()
+    val label = date.format(DateTimeFormatter.ofPattern("EEE d MMM", locale))
+    return label.replaceFirstChar { it.titlecase(locale) }
 }

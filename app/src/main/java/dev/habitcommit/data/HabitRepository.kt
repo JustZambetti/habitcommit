@@ -2,11 +2,13 @@ package dev.habitcommit.data
 
 import android.content.Context
 import dev.habitcommit.HabitCommitApp
+import dev.habitcommit.R
 import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import java.util.UUID
 
 data class CheckUi(
@@ -86,12 +88,20 @@ class HabitRepository(private val context: Context) {
     var configError: String? = null
         private set
 
+    /** Sample config in the device language, falling back to English. */
+    private fun sampleAssetName(): String = when (Locale.getDefault().language) {
+        "it" -> "sample_habits_it.json"
+        "ro" -> "sample_habits_ro.json"
+        else -> "sample_habits.json"
+    }
+
+    private fun readSample(): String =
+        context.assets.open(sampleAssetName()).bufferedReader().use { it.readText() }
+
     fun ensureSeeded() {
         synchronized(configLock) {
             if (configFile.exists()) return
-            val sample = context.assets.open("sample_habits.json")
-                .bufferedReader()
-                .use { it.readText() }
+            val sample = readSample()
             configFile.writeText(sample)
             cachedConfig = null
 
@@ -110,10 +120,7 @@ class HabitRepository(private val context: Context) {
         synchronized(configLock) {
             cachedConfig?.let { return it }
             if (!configFile.exists()) {
-                val sample = context.assets.open("sample_habits.json")
-                    .bufferedReader()
-                    .use { it.readText() }
-                configFile.writeText(sample)
+                configFile.writeText(readSample())
             }
             val text = configFile.readText()
             return try {
@@ -122,11 +129,8 @@ class HabitRepository(private val context: Context) {
                     configError = null
                 }
             } catch (e: Exception) {
-                configError = e.message ?: "Configurazione non valida"
-                val fallback = context.assets.open("sample_habits.json")
-                    .bufferedReader()
-                    .use { it.readText() }
-                HabitsConfig.parse(fallback)
+                configError = e.message ?: context.getString(R.string.invalid_configuration)
+                HabitsConfig.parse(readSample())
             }
         }
     }
@@ -144,7 +148,11 @@ class HabitRepository(private val context: Context) {
             prefs.edit().putBoolean(KEY_DEMO_MODE, false).apply()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(IllegalArgumentException(e.message ?: "Configurazione non valida"))
+            Result.failure(
+                IllegalArgumentException(
+                    e.message ?: context.getString(R.string.invalid_configuration),
+                ),
+            )
         }
     }
 
