@@ -7,22 +7,26 @@
     <string name="widget_42_name">HabitCommit · Compact</string>
     <string name="widget_22_name">HabitCommit · Focus</string>
     <string name="widget_24_name">HabitCommit · Vertical</string>
-    <string name="widget_44_description">Planul de azi, cinci check-uri, serie și configurare.</string>
-    <string name="widget_42_description">Patru check-uri pentru azi și seria, în format compact.</string>
-    <string name="widget_22_description">Progres, serie și următorul check, în format minim.</string>
-    <string name="widget_24_description">Patru check-uri pentru azi în format vertical, cu buton rapid.</string>
+    <string name="widget_44_description">Planul de azi, cinci metrici, seria și setările.</string>
+    <string name="widget_42_description">Patru metrici pentru azi și seria, în format compact.</string>
+    <string name="widget_22_description">Progres și serie, în format minim.</string>
+    <string name="widget_24_description">Patru metrici pentru azi în format vertical, cu un buton rapid.</string>
 
     <!-- Widget contents -->
     <string name="widget_today_upper">AZI</string>
     <string name="widget_empty">Nicio metrică pentru azi</string>
     <string name="widget_open_app">Deschide aplicația</string>
-    <string name="widget_open_app_upper">DESCHIDE APP</string>
-    <string name="widget_config">Configurează</string>
-    <string name="widget_saved">salvat ✓</string>
+    <string name="widget_open_app_upper">DESCHIDE</string>
+    <string name="widget_config">Setări</string>
+    <string name="widget_saved">pe dispozitiv ✓</string>
     <string name="widget_plan_file">PLAN · habits.json</string>
     <string name="widget_tomorrow">Mâine</string>
-    <string name="widget_extra_in_app">+%1$d în app</string>
+    <string name="widget_extra_in_app">+%1$d în aplicație</string>
     <string name="widget_streak_abbr">%1$d z</string>
+    <string name="widget_desc_binary_done">%1$s, făcut</string>
+    <string name="widget_desc_binary_open">%1$s, nefăcut</string>
+    <string name="widget_desc_rating">%1$s, evaluare %2$d din %3$d</string>
+    <string name="star_empty">☆</string>
     <plurals name="widget_streak_row">
         <item quantity="one">%d zi la rând</item>
         <item quantity="few">%d zile la rând</item>
@@ -30,25 +34,20 @@
     </plurals>
 
     <!-- Today -->
-    <string name="today_title">Astăzi</string>
-    <string name="loading_plan">Încarc planul de azi…</string>
+    <string name="today_title">Azi</string>
+    <string name="loading_plan">Se încarcă planul de azi…</string>
     <string name="history_title">Istoric</string>
 
     <string name="demo_badge">DEMO</string>
     <string name="demo_local">Date demo locale</string>
-    <string name="action_clear">Șterge</string>
+    <string name="action_remove_demo">Elimină demo</string>
     <string name="config_invalid_title">Configurația nu este validă</string>
-    <string name="config_invalid_hint">Corectează habits.json în repo-ul GitHub: aplicația îl descarcă automat.</string>
+    <string name="config_invalid_hint">Corectează habits.json în repo-ul GitHub: aplicația îl descarcă singură.</string>
 
     <string name="plan_today">PLANUL DE AZI</string>
     <string name="no_metrics_for_plan">Nicio metrică pentru acest plan.</string>
     <string name="saved_locally">salvat local ✓</string>
     <string name="tomorrow">MÂINE</string>
-
-    <string name="source_date_override">SUPRASCRIEREA DE AZI</string>
-    <string name="source_weekday">PLANUL ZILEI · HABITS.JSON</string>
-    <string name="source_default">PLAN IMPLICIT</string>
-    <string name="source_local_override">PLAN · HABITS.JSON</string>
 
     <plurals name="streak_days">
         <item quantity="one">%d zi la rând</item>
@@ -56,49 +55,46 @@
         <item quantity="other">%d de zile la rând</item>
     </plurals>
 
+    <string name="rating_star">Evaluează %1$d din %2$d</string>
+
     <string name="widget_card_title">Widget pe ecranul principal</string>
-    <string name="widget_card_desc">Fiecare atingere actualizează imediat datele. Adaugă-l pe ecranul principal:</string>
-    <string name="widget_pin_note">Dacă launcherul nu afișează cererea: ține apăsat pe ecranul principal → Widgeturi → HabitCommit.</string>
-    <string name="widget_pin_unsupported">Launcherul nu acceptă adăugarea automată: folosește Widgeturi → HabitCommit.</string>
+    <string name="widget_card_desc">Fiecare atingere actualizează datele imediat. Adaugă-l pe ecranul principal:</string>
+    <string name="widget_pin_note">Dacă launcherul nu îți propune: ține apăsat pe ecranul principal → Widgeturi → HabitCommit.</string>
+    <string name="widget_pin_unsupported">Acest launcher nu poate adăuga widgeturi automat: folosește Widgeturi → HabitCommit.</string>
 
     <string name="sync_card_title">Sincronizare GitHub</string>
-    <string name="not_connected">Neconectată</string>
+    <string name="not_connected">Neconectat</string>
     <plurals name="pending_count">
-        <item quantity="one">%d în coadă</item>
-        <item quantity="few">%d în coadă</item>
-        <item quantity="other">%d în coadă</item>
+        <item quantity="one">%d în așteptare</item>
+        <item quantity="few">%d în așteptare</item>
+        <item quantity="other">%d în așteptare</item>
     </plurals>
-    <string name="sync_card_desc">Conectează un repo privat pentru a păstra istoricul în git. Valorile rămân locale până există rețea.</string>
     <string name="sync_manage">Gestionează sincronizarea</string>
-    <string name="sync_connect">Conectează repo</string>
-    <string name="sync_now_short">Sincronizează</string>
 
-    <string name="config_card_subtitle">Metrice, planuri și program</string>
-    <string name="config_card_desc">Planul de azi este derivat din acest fișier. Cu sincronizarea activă, fiecare valoare înregistrată este pusă în coadă și trimisă în repo-ul tău GitHub.</string>
     <string name="action_reload_demo">Reîncarcă demo</string>
-    <string name="action_clear_metrics">Șterge toate metricele locale</string>
+    <string name="action_clear_metrics">Șterge toate metricile locale</string>
 
     <string name="close">Închide</string>
-    <string name="invalid_configuration">Configurație nevalidă</string>
+    <string name="invalid_configuration">Configurație invalidă</string>
 
     <!-- Settings -->
     <string name="settings_title">Setări</string>
-    <string name="settings_widget_sub">Formate și adăugare pe ecran</string>
+    <string name="settings_widget_sub">Formate și adăugare pe ecranul principal</string>
     <string name="settings_data">Date</string>
-    <string name="settings_data_sub">Demo și ștergere locală</string>
-    <string name="settings_about">Despre</string>
-    <string name="settings_about_sub">Versiune și confidențialitate</string>
+    <string name="settings_data_sub">Valori demo și ștergere locală</string>
+    <string name="settings_about">Informații</string>
+    <string name="settings_about_sub">Versiune, licență și date</string>
     <string name="widget_format_plan">4×4 · Plan</string>
     <string name="widget_format_compact">4×2 · Compact</string>
     <string name="widget_format_vertical">2×4 · Vertical</string>
     <string name="widget_format_focus">2×2 · Focus</string>
     <string name="action_add">Adaugă</string>
-    <string name="demo_clear_title">Ștergi datele demo?</string>
-    <string name="demo_clear_body">Valorile demo vor fi șterse. Poți începe să înregistrezi de la zero.</string>
+    <string name="demo_clear_title">Elimini datele demo?</string>
+    <string name="demo_clear_body">Valorile de exemplu vor fi șterse. Poți începe să înregistrezi de la zero.</string>
     <string name="data_seed_title">Reîncarci datele demo?</string>
     <string name="data_seed_body">Valorile locale actuale sunt înlocuite cu un exemplu nou. Planul rămâne același.</string>
     <string name="data_clear_title">Ștergi toate valorile înregistrate?</string>
-    <string name="data_clear_body">Fiecare valoare înregistrată pe acest dispozitiv este ștearsă. Planul și sincronizarea rămân.</string>
+    <string name="data_clear_body">Fiecare valoare înregistrată pe acest dispozitiv este ștearsă. Planul și setările de sincronizare rămân.</string>
     <string name="about_version">Versiunea %1$s</string>
     <string name="about_author">Autor: Giorgio Zambetti</string>
     <string name="about_github">GitHub: JustZambetti/habitcommit</string>
@@ -106,40 +102,50 @@
 
     <!-- History -->
     <string name="history_heading">Istoric</string>
-    <string name="history_range">Ultimele %1$d zile · %2$s</string>
+    <plurals name="history_range">
+        <item quantity="one">Ultima %1$d zi · %2$s</item>
+        <item quantity="few">Ultimele %1$d zile · %2$s</item>
+        <item quantity="other">Ultimele %1$d zile · %2$s</item>
+    </plurals>
     <string name="range_chip">%1$d z</string>
-    <string name="history_loading">Încarc istoricul…</string>
-    <string name="history_empty">Nicio dată: înregistrează o valoare din widget și revino.</string>
-    <string name="history_legend">Pătrat gol: nu era în planul acelei zile. Pal: planificat, dar neînregistrat. Plin: făcut. Ratingurile au un grafic cu puncte: zilele adiacente sunt unite.</string>
-    <string name="history_metric_days">%1$d/%2$d zile</string>
-    <string name="history_average">★ %1$s</string>
-    <string name="history_recent">ULTIMELE ZILE</string>
+    <string name="history_loading">Se încarcă istoricul…</string>
+    <string name="history_empty">Nu există date încă: înregistrează o valoare din widget și revino.</string>
+    <string name="history_legend">Pătrat gol: metrica nu era în planul acelei zile. Pal: planificat, dar neînregistrat. Plin: făcut. Evaluările apar ca grafic cu puncte: punctele din zile alăturate sunt unite.</string>
+    <plurals name="history_metric_days">
+        <item quantity="one">%1$d din %2$d zi făcută</item>
+        <item quantity="few">%1$d din %2$d zile făcute</item>
+        <item quantity="other">%1$d din %2$d de zile făcute</item>
+    </plurals>
+    <string name="history_average">media ★ %1$s</string>
+    <string name="history_recent">ZILE RECENTE</string>
     <string name="history_today">azi</string>
 
     <!-- Sync -->
-    <string name="sync_title">Sincronizare GitHub</string>
-    <string name="pat_label">GitHub Personal Access Token</string>
+    <string name="sync_title">Sincronizează GitHub</string>
+    <string name="pat_label">Personal Access Token GitHub</string>
     <string name="pat_help">Cum creezi un PAT</string>
     <string name="action_show">Arată</string>
     <string name="action_hide">Ascunde</string>
-    <string name="pat_requirement">PAT-ul are nevoie de Contents: write pentru a trimite actualizările.</string>
+    <string name="pat_requirement">PAT-ul are nevoie de Contents: write pentru commituri.</string>
     <string name="pat_saved">PAT salvat și ascuns pe acest dispozitiv (criptat). Lasă gol pentru a-l păstra.</string>
     <string name="repo_section">Repository</string>
-    <string name="repo_owner">Owner</string>
+    <string name="repo_owner">Proprietar</string>
     <string name="repo_name">Nume</string>
     <string name="repo_branch">Branch</string>
     <string name="habitcommit_path">Calea HabitCommit</string>
     <string name="action_change_repo">Schimbă repo</string>
     <string name="action_connect">Conectează</string>
-    <string name="action_checking">Verific…</string>
+    <string name="action_checking">Se verifică…</string>
     <string name="action_sync_now">Sincronizează acum</string>
     <string name="action_download_config">Descarcă habits.json</string>
     <string name="action_disconnect">Deconectează repo</string>
-    <string name="sync_queued">În coadă: %1$d</string>
+    <string name="disconnect_title">Deconectezi sincronizarea GitHub?</string>
+    <string name="disconnect_body">Tokenul este șters de pe acest dispozitiv. Valorile înregistrate pe telefon rămân; cele încă în așteptare vor fi încărcate dacă conectezi din nou un repository.</string>
+    <string name="sync_queued">În așteptare: %1$d</string>
     <string name="sync_last_at">ultima sincronizare %1$s</string>
-    <string name="sync_queued_toast">Sincronizare în coadă</string>
+    <string name="sync_queued_toast">Sincronizare în așteptare</string>
     <string name="sync_disconnected_toast">Sincronizare deconectată. Datele locale rămân.</string>
-    <string name="pick_repo_title">Alege repo</string>
+    <string name="pick_repo_title">Alege repository</string>
     <string name="repo_private">privat</string>
     <string name="repo_public">public</string>
     <string name="download_title">Descarci habits.json?</string>
@@ -148,59 +154,61 @@
     <string name="action_cancel">Anulează</string>
     <string name="config_pulled">habits.json actualizat din repo</string>
     <string name="error_token_required">Introdu un PAT GitHub</string>
-    <string name="error_no_repo">PAT-ul nu vede niciun repository. Adaugă unul tokenului pe GitHub și încearcă din nou.</string>
+    <string name="error_no_repo">PAT-ul nu vede niciun repository. Acordă-i acces la un repo pe GitHub și încearcă din nou.</string>
     <string name="error_verification_failed">Verificare eșuată</string>
     <string name="error_save_failed">Salvare eșuată</string>
-    <string name="error_no_write">Tokenul nu are permisiune de scriere pe %1$s</string>
+    <string name="error_no_write">Tokenul nu poate scrie în %1$s</string>
     <string name="error_download_failed">Descărcare eșuată</string>
-    <string name="error_invalid_repo">Repo nevalid</string>
+    <string name="error_invalid_repo">Repository invalid</string>
 
     <!-- Sync engine and network errors -->
     <string name="sync_saved">Conectat la %1$s (%2$s, %3$s/)</string>
     <string name="sync_disconnected">Sincronizare deconectată</string>
     <string name="sync_all_synced">Totul sincronizat</string>
-    <string name="sync_syncing_remaining">Sincronizez… %1$d rămase</string>
+    <plurals name="sync_syncing_remaining">
+        <item quantity="one">Se sincronizează… a mai rămas %d</item>
+        <item quantity="few">Se sincronizează… au mai rămas %d</item>
+        <item quantity="other">Se sincronizează… au mai rămas %d</item>
+    </plurals>
     <string name="sync_token_missing">Token lipsă: reconectează repo-ul</string>
     <string name="sync_failed">Sincronizare eșuată</string>
     <string name="error_sync_not_configured">Sincronizarea nu este configurată</string>
-    <string name="error_token_invalid">Token nevalid sau expirat. Generează un PAT nou.</string>
-    <string name="error_permissions">Permisiuni insuficiente sau rate limit. Sunt necesare Contents: Read and write + Metadata: Read.</string>
+    <string name="error_token_invalid">Token invalid sau expirat. Generează un PAT nou.</string>
+    <string name="error_permissions">Permisiuni insuficiente sau limită de cereri. Sunt necesare Contents: Read and write + Metadata: Read.</string>
     <string name="error_repo_not_found">%1$s. Verifică repo-ul și permisiunile tokenului.</string>
     <string name="error_network">Eroare de rețea: %1$s</string>
-    <string name="error_file_too_large">Fișier journal prea mare</string>
+    <string name="error_file_too_large">Fișierul jurnal este prea mare</string>
     <string name="error_commit_rejected">Commit respins</string>
     <string name="error_journal_conflict">Jurnal actualizat de altă sincronizare</string>
     <string name="error_config_missing">%1$s nu există pe branch-ul %2$s</string>
     <string name="error_not_a_file">%1$s nu este un fișier</string>
-    <string name="error_owner_invalid">Owner GitHub nevalid</string>
-    <string name="error_repo_invalid">Nume de repo nevalid</string>
-    <string name="error_branch_invalid">Branch nevalid</string>
-    <string name="error_journal_dir_invalid">Folder journal nevalid</string>
+    <string name="error_branch_invalid">Branch invalid</string>
+    <string name="error_journal_dir_invalid">Folder jurnal invalid</string>
 
-    <!-- habits.json validation, shown in the config editor -->
+    <!-- habits.json validation -->
     <string name="error_no_plan">Niciun plan configurat</string>
-    <string name="config_error_invalid_json">JSON nevalid: %1$s</string>
-    <string name="config_error_schema">Schema nesuportată: %1$d (se aștepta %2$d)</string>
-    <string name="config_error_timezone_missing">Timezone lipsă</string>
-    <string name="config_error_timezone_invalid">Timezone nevalid: %1$s</string>
-    <string name="config_error_metrics_missing">metrics lipsă</string>
+    <string name="config_error_invalid_json">JSON invalid: %1$s</string>
+    <string name="config_error_schema">Schemă neacceptată: %1$d (așteptat %2$d)</string>
+    <string name="config_error_timezone_missing">Lipsește fusul orar</string>
+    <string name="config_error_timezone_invalid">Fus orar invalid: %1$s</string>
+    <string name="config_error_metrics_missing">Lipsesc metricile</string>
     <string name="config_error_metrics_not_list">metrics trebuie să fie o listă</string>
     <string name="config_error_metrics_not_list_legacy">metrics trebuie să fie o listă (cheie legacy: checks)</string>
-    <string name="config_error_metric_id">ID de metrică nevalid: \"%1$s\"</string>
+    <string name="config_error_metric_id">ID metrică invalid: \"%1$s\"</string>
     <string name="config_error_metric_duplicate">Metrică duplicată: %1$s</string>
-    <string name="config_error_metric_type">Tip nevalid pentru \"%1$s\": \"%2$s\" (se aștepta binary sau rating)</string>
-    <string name="config_error_max_binary">\"max\" este permis doar pentru metricile rating (metrica \"%1$s\")</string>
-    <string name="config_error_max_range">max nevalid pentru \"%1$s\": %2$d (se aștepta %3$d..%4$d)</string>
+    <string name="config_error_metric_type">Tip invalid pentru \"%1$s\": \"%2$s\" (așteptat binary sau rating)</string>
+    <string name="config_error_max_binary">\"max\" este permis doar la metricile rating (metrica \"%1$s\")</string>
+    <string name="config_error_max_range">Max invalid pentru \"%1$s\": %2$d (așteptat %3$d..%4$d)</string>
     <string name="config_error_metrics_empty">Nicio metrică definită</string>
-    <string name="config_error_plans_missing">plans lipsă</string>
+    <string name="config_error_plans_missing">Lipsesc planurile</string>
     <string name="config_error_plans_not_object">plans trebuie să fie un obiect</string>
-    <string name="config_error_plan_id">ID de plan nevalid: \"%1$s\"</string>
-    <string name="config_error_plan_metric">Planul \"%1$s\" folosește metrica necunoscută \"%2$s\"</string>
+    <string name="config_error_plan_id">ID plan invalid: \"%1$s\"</string>
+    <string name="config_error_plan_metric">Planul \"%1$s\" folosește o metrică necunoscută: \"%2$s\"</string>
     <string name="config_error_plans_empty">Niciun plan definit</string>
-    <string name="config_error_weekday">Zi nevalidă în schedule.byWeekday: \"%1$s\"</string>
-    <string name="config_error_weekday_plan">schedule.byWeekday.%1$s folosește planul necunoscut \"%2$s\"</string>
-    <string name="config_error_override_date">Dată override nevalidă: \"%1$s\"</string>
-    <string name="config_error_override_plan">Override-ul %1$s folosește planul necunoscut \"%2$s\"</string>
-    <string name="config_error_override_add">Override-ul %1$s adaugă metrica necunoscută \"%2$s\"</string>
-    <string name="config_error_override_remove">Override-ul %1$s elimină metrica necunoscută \"%2$s\"</string>
+    <string name="config_error_weekday">Zi invalidă în schedule.byWeekday: \"%1$s\"</string>
+    <string name="config_error_weekday_plan">schedule.byWeekday.%1$s folosește un plan necunoscut: \"%2$s\"</string>
+    <string name="config_error_override_date">Dată override invalidă: \"%1$s\"</string>
+    <string name="config_error_override_plan">Override-ul %1$s folosește un plan necunoscut: \"%2$s\"</string>
+    <string name="config_error_override_add">Override-ul %1$s adaugă o metrică necunoscută: \"%2$s\"</string>
+    <string name="config_error_override_remove">Override-ul %1$s elimină o metrică necunoscută: \"%2$s\"</string>
 </resources>

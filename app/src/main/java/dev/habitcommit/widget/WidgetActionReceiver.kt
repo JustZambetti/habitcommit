@@ -8,6 +8,7 @@ import android.os.SystemClock
 import android.util.Log
 import dev.habitcommit.BuildConfig
 import dev.habitcommit.HabitCommitApp
+import kotlin.concurrent.thread
 
 /**
  * Handles widget taps directly, without Glance or WorkManager.
@@ -20,29 +21,38 @@ class WidgetActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val checkId = intent.getStringExtra(EXTRA_CHECK_ID) ?: return
+        val action = intent.action ?: return
+        if (action != ACTION_TOGGLE && action != ACTION_SET) return
+        val value = intent.getIntExtra(EXTRA_VALUE, 0)
         val started = SystemClock.elapsedRealtime()
-        val repository = (context.applicationContext as HabitCommitApp).repository
-        try {
-            when (intent.action) {
-                ACTION_TOGGLE -> repository.toggle(checkId)
-                ACTION_SET -> repository.setValue(checkId, intent.getIntExtra(EXTRA_VALUE, 0))
-                else -> return
+        val appContext = context.applicationContext
+        val repository = (appContext as HabitCommitApp).repository
+        // The journal and the widget render both touch disk and parse history;
+        // keep them off the main thread while still finishing this broadcast.
+        val pending = goAsync()
+        thread(name = "habitcommit-widget") {
+            try {
+                when (action) {
+                    ACTION_TOGGLE -> repository.toggle(checkId)
+                    ACTION_SET -> repository.setValue(checkId, value)
+                }
+                if (BuildConfig.DEBUG) {
+                    val processAge = SystemClock.elapsedRealtime() - Process.getStartElapsedRealtime()
+                    Log.d(
+                        TAG,
+                        "recorded $checkId in ${SystemClock.elapsedRealtime() - started}ms, " +
+                            "process age ${processAge}ms",
+                    )
+                }
+                refreshAllWidgets(appContext)
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "action done: $checkId in ${SystemClock.elapsedRealtime() - started}ms")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "action failed: ${e.javaClass.simpleName}")
+            } finally {
+                pending.finish()
             }
-        } catch (e: Exception) {
-            Log.w(TAG, "action failed: ${e.javaClass.simpleName}")
-            return
-        }
-        if (BuildConfig.DEBUG) {
-            val processAge = SystemClock.elapsedRealtime() - Process.getStartElapsedRealtime()
-            Log.d(
-                TAG,
-                "recorded $checkId in ${SystemClock.elapsedRealtime() - started}ms, " +
-                    "process age ${processAge}ms",
-            )
-        }
-        refreshAllWidgets(context)
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "action done: $checkId in ${SystemClock.elapsedRealtime() - started}ms")
         }
     }
 

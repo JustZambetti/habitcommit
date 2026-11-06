@@ -32,3 +32,9 @@ Thumbs.db
 # Python
 __pycache__/
 *.pyc
+
+# Local release signing
+keystore.properties
+
+# Personal journal copied from a device; data lives on the phone and in GitHub
+journal/

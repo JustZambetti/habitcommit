@@ -41,6 +41,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,9 +85,14 @@ fun HistoryScreen(repository: HabitRepository, onClose: () -> Unit) {
                 )
                 state?.let {
                     Text(
-                        text = stringResource(R.string.history_range, range, it.zone.id),
+                        text = pluralStringResource(
+                            R.plurals.history_range,
+                            range,
+                            range,
+                            it.zone.id,
+                        ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                     )
                 }
             }
@@ -137,15 +143,15 @@ fun HistoryScreen(repository: HabitRepository, onClose: () -> Unit) {
         Text(
             text = stringResource(R.string.history_legend),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 10.sp,
-            lineHeight = 14.sp,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
         )
 
         Spacer(Modifier.height(18.dp))
         Text(
             text = stringResource(R.string.history_recent),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 9.sp,
+            fontSize = 10.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
             letterSpacing = 1.5.sp,
         )
@@ -183,8 +189,9 @@ private fun MetricHistoryCard(metric: HistoryMetric, state: HistoryState) {
                 Text(
                     text = buildString {
                         append(
-                            stringResource(
-                                R.string.history_metric_days,
+                            pluralStringResource(
+                                R.plurals.history_metric_days,
+                                metric.activeDays,
                                 metric.activeDays,
                                 metric.values.size,
                             ),
@@ -200,7 +207,7 @@ private fun MetricHistoryCard(metric: HistoryMetric, state: HistoryState) {
                         }
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                 )
             }
             Spacer(Modifier.height(10.dp))
@@ -350,12 +357,12 @@ private fun StripLabels(days: List<LocalDate>) {
             text = formatShortDate(days.first()),
             modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 9.sp,
+            fontSize = 11.sp,
         )
         Text(
             text = stringResource(R.string.history_today),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 9.sp,
+            fontSize = 11.sp,
         )
     }
 }
@@ -398,7 +405,7 @@ private fun DayHistoryRow(day: HistoryDay, state: HistoryState) {
                 text = day.planLabel,
                 modifier = Modifier.weight(1.3f),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
@@ -424,8 +431,8 @@ private fun DayHistoryRow(day: HistoryDay, state: HistoryState) {
             Text(
                 text = parts.joinToString(" · "),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 10.sp,
-                lineHeight = 14.sp,
+                fontSize = 11.sp,
+                lineHeight = 15.sp,
             )
         }
     }

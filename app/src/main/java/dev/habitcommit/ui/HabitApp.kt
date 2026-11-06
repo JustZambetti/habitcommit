@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,7 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -44,14 +46,19 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -88,12 +95,13 @@ fun HabitApp(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var today by remember { mutableStateOf<TodayState?>(null) }
-    var showSync by remember { mutableStateOf(false) }
-    var showHistory by remember { mutableStateOf(false) }
-    var showSettings by remember { mutableStateOf(false) }
-    var showWidgets by remember { mutableStateOf(false) }
-    var showData by remember { mutableStateOf(false) }
-    var showInfo by remember { mutableStateOf(false) }
+    // The open screen survives rotation; the state itself reloads from disk.
+    var showSync by rememberSaveable { mutableStateOf(false) }
+    var showHistory by rememberSaveable { mutableStateOf(false) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showWidgets by rememberSaveable { mutableStateOf(false) }
+    var showData by rememberSaveable { mutableStateOf(false) }
+    var showInfo by rememberSaveable { mutableStateOf(false) }
     var confirmDemoClear by remember { mutableStateOf(false) }
     var reloadKey by remember { mutableIntStateOf(0) }
     val syncStatus by syncManager.status.collectAsState()
@@ -271,7 +279,12 @@ fun HabitApp(
                                     confirmDemoClear = false
                                     clearMetrics()
                                 },
-                            ) { Text(stringResource(R.string.action_clear)) }
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.action_remove_demo),
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
                         },
                         dismissButton = {
                             TextButton(onClick = { confirmDemoClear = false }) {
@@ -335,7 +348,7 @@ private fun DemoBanner(onClear: () -> Unit) {
             Text(
                 text = stringResource(R.string.demo_badge),
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
-                fontSize = 9.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Medium,
                 letterSpacing = 1.sp,
             )
@@ -344,10 +357,13 @@ private fun DemoBanner(onClear: () -> Unit) {
                 text = stringResource(R.string.demo_local),
                 modifier = Modifier.weight(1f),
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
             )
             TextButton(onClick = onClear) {
-                Text(stringResource(R.string.action_clear))
+                Text(
+                    text = stringResource(R.string.action_remove_demo),
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
         }
     }
@@ -365,13 +381,13 @@ private fun ErrorCard(error: String) {
                 text = stringResource(R.string.config_invalid_title),
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 fontWeight = FontWeight.Medium,
-                fontSize = 13.sp,
+                fontSize = 14.sp,
             )
             Spacer(Modifier.height(3.dp))
             Text(
                 text = error,
                 color = MaterialTheme.colorScheme.onErrorContainer,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
             )
             Spacer(Modifier.height(2.dp))
             Text(
@@ -406,7 +422,7 @@ private fun TodayCard(
                     Text(
                         text = stringResource(R.string.plan_today),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 9.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
                         letterSpacing = 1.5.sp,
                     )
@@ -426,15 +442,23 @@ private fun TodayCard(
             }
 
             Spacer(Modifier.height(12.dp))
-            LinearProgressIndicator(
-                progress = { state.progress },
+            // A custom track avoids the dot Material's indicator draws at 0%.
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            )
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            ) {
+                if (state.progress > 0f) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(state.progress)
+                            .height(6.dp)
+                            .background(MaterialTheme.colorScheme.primary),
+                    )
+                }
+            }
             Spacer(Modifier.height(6.dp))
 
             if (state.metrics.isEmpty()) {
@@ -466,13 +490,13 @@ private fun TodayCard(
                 Text(
                     text = pluralStringResource(R.plurals.streak_days, state.streak, state.streak),
                     modifier = Modifier.weight(1f),
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
                     text = stringResource(R.string.saved_locally),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
                 )
             }
 
@@ -507,7 +531,7 @@ private fun CheckRow(check: CheckUi, onToggle: () -> Unit, onRate: (Int) -> Unit
                 Text(
                     text = time,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                 )
             }
             Spacer(Modifier.width(8.dp))
@@ -521,14 +545,22 @@ private fun CheckRow(check: CheckUi, onToggle: () -> Unit, onRate: (Int) -> Unit
 
 @Composable
 private fun RatingStars(value: Int, max: Int, onRate: (Int) -> Unit) {
-    // Tapping the current star clears the rating; each star is its own 32dp tap target.
-    Row {
+    // Tapping the current star clears the rating. Wide 5-star scales get full
+    // 40dp targets; long scales shrink to keep the label readable.
+    val starSize = if (max <= 5) 40.dp else 30.dp
+    Row(modifier = Modifier.selectableGroup()) {
         for (star in 1..max) {
+            val description = stringResource(R.string.rating_star, star, max)
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(width = starSize, height = 44.dp)
                     .clip(MaterialTheme.shapes.small)
-                    .clickable { onRate(if (star == value) 0 else star) },
+                    .selectable(
+                        selected = star == value,
+                        role = Role.RadioButton,
+                        onClick = { onRate(if (star == value) 0 else star) },
+                    )
+                    .semantics { contentDescription = description },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -537,7 +569,7 @@ private fun RatingStars(value: Int, max: Int, onRate: (Int) -> Unit) {
                     color = if (star <= value) {
                         MaterialTheme.colorScheme.primary
                     } else {
-                        MaterialTheme.colorScheme.outline
+                        MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 )
             }
@@ -560,7 +592,9 @@ private fun Heatmap(
                 modifier = Modifier
                     .size(cellSize)
                     .clip(RoundedCornerShape(3.dp))
-                    .background(HeatColors[level.coerceIn(0, HeatColors.lastIndex)]),
+                    .background(
+                        heatColors()[level.coerceIn(0, HeatColors.lastIndex)],
+                    ),
             )
         }
     }
@@ -581,14 +615,14 @@ private fun TomorrowRow(state: TodayState) {
                 Text(
                     text = stringResource(R.string.tomorrow),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 8.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 1.2.sp,
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = state.tomorrowPlan?.label ?: "—",
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                 )
             }
@@ -596,7 +630,7 @@ private fun TomorrowRow(state: TodayState) {
                 text = state.tomorrowPreview,
                 modifier = Modifier.weight(1.4f),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -672,13 +706,14 @@ private fun SettingsRow(title: String, subtitle: String, onClick: () -> Unit) {
                 Text(
                     text = subtitle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                 )
             }
-            Text(
-                text = "›",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 22.sp,
+            Icon(
+                painter = painterResource(R.drawable.ic_chevron_right),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -699,7 +734,7 @@ private fun WidgetScreen(context: Context, onClose: () -> Unit) {
         Text(
             text = stringResource(R.string.widget_card_desc),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             lineHeight = 17.sp,
         )
         Spacer(Modifier.height(14.dp))
@@ -731,8 +766,8 @@ private fun WidgetScreen(context: Context, onClose: () -> Unit) {
         Text(
             text = stringResource(R.string.widget_pin_note),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 11.sp,
-            lineHeight = 15.sp,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
         )
         Spacer(Modifier.height(24.dp))
     }
@@ -762,8 +797,8 @@ private fun WidgetFormatRow(
                 Text(
                     text = description,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
                 )
             }
             Spacer(Modifier.width(12.dp))
@@ -796,7 +831,7 @@ private fun DataScreen(
         Text(
             text = stringResource(R.string.settings_data_sub),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             lineHeight = 17.sp,
         )
         Spacer(Modifier.height(16.dp))
@@ -851,7 +886,12 @@ private fun DataScreen(
                         confirmClear = false
                         onClear()
                     },
-                ) { Text(stringResource(R.string.action_clear)) }
+                ) {
+                    Text(
+                        text = stringResource(R.string.action_clear_metrics),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             },
             dismissButton = {
                 TextButton(onClick = { confirmClear = false }) {
@@ -877,14 +917,14 @@ private fun InfoScreen(onClose: () -> Unit) {
         Spacer(Modifier.height(12.dp))
         Text(
             text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
-            fontSize = 14.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
         )
         Spacer(Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.about_author),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
         )
         Spacer(Modifier.height(4.dp))
         Text(
@@ -894,14 +934,14 @@ private fun InfoScreen(onClose: () -> Unit) {
                 .clickable { uriHandler.openUri("https://github.com/JustZambetti/habitcommit") }
                 .padding(vertical = 2.dp),
             color = MaterialTheme.colorScheme.primary,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
         )
         Spacer(Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.about_license),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 12.sp,
-            lineHeight = 17.sp,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
         )
         Spacer(Modifier.height(24.dp))
     }
@@ -933,7 +973,7 @@ private fun SyncStatusRow(status: SyncStatus, onOpen: () -> Unit) {
                 } else {
                     MaterialTheme.colorScheme.onErrorContainer
                 },
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -948,7 +988,7 @@ private fun SyncStatusRow(status: SyncStatus, onOpen: () -> Unit) {
                 } else {
                     MaterialTheme.colorScheme.onErrorContainer
                 },
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
             )
         }

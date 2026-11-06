@@ -1,8 +1,23 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+// Release signing is optional: CI and contributors build unsigned APKs.
+// Locally, put the four values in keystore.properties (gitignored) or export
+// HABITCOMMIT_KEYSTORE / _KEYSTORE_PASSWORD / _KEY_ALIAS / _KEY_PASSWORD.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun signingValue(key: String, env: String): String? =
+    keystoreProperties.getProperty(key) ?: System.getenv(env)
+
+val releaseStore = signingValue("storeFile", "HABITCOMMIT_KEYSTORE")
 
 android {
     namespace = "dev.habitcommit"
@@ -12,8 +27,19 @@ android {
         applicationId = "dev.habitcommit"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0-smoke"
+        versionCode = 2
+        versionName = "0.2.0"
+    }
+
+    signingConfigs {
+        if (releaseStore != null) {
+            create("release") {
+                storeFile = rootProject.file(releaseStore)
+                storePassword = signingValue("storePassword", "HABITCOMMIT_KEYSTORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "HABITCOMMIT_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "HABITCOMMIT_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -22,7 +48,13 @@ android {
             versionNameSuffix = "-debug"
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

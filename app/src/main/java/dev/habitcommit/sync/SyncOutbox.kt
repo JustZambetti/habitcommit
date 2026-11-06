@@ -1,6 +1,7 @@
 package dev.habitcommit.sync
 
 import android.content.Context
+import dev.habitcommit.data.writeAtomically
 import org.json.JSONObject
 import java.io.File
 import java.time.LocalDate
@@ -39,9 +40,13 @@ class SyncOutbox(context: Context) {
         }
     }
 
-    fun remove(id: String) {
+    fun remove(id: String) = removeAll(setOf(id))
+
+    /** Removes every id in [ids] with a single rewrite; sync batches contain many. */
+    fun removeAll(ids: Collection<String>) {
+        if (ids.isEmpty()) return
         synchronized(lock) {
-            val remaining = readLocked().filterNot { it.id == id }
+            val remaining = readLocked().filterNot { it.id in ids }
             writeLocked(remaining)
         }
     }
@@ -78,7 +83,7 @@ class SyncOutbox(context: Context) {
             file.delete()
             return
         }
-        file.writeText(
+        file.writeAtomically(
             items.joinToString(separator = "") { item ->
                 JSONObject().apply {
                     put("id", item.id)

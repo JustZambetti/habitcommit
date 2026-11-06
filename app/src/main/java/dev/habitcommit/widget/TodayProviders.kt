@@ -50,13 +50,19 @@ private val ALL_PROVIDERS = listOf(
 fun refreshAllWidgets(context: Context) {
     val started = SystemClock.elapsedRealtime()
     val appContext = context.applicationContext
-    val state = (appContext as HabitCommitApp).repository.today()
     val manager = AppWidgetManager.getInstance(appContext)
-    var updated = 0
-    ALL_PROVIDERS.forEach { (provider, size) ->
+    val pinned = ALL_PROVIDERS.mapNotNull { (provider, size) ->
         val ids = runCatching {
             manager.getAppWidgetIds(ComponentName(appContext, provider))
         }.getOrDefault(IntArray(0))
+        if (ids.isEmpty()) null else Triple(provider, size, ids)
+    }
+    // Screen-on and boot broadcasts are frequent; skip parsing the journal when
+    // no widget is pinned.
+    if (pinned.isEmpty()) return
+    val state = (appContext as HabitCommitApp).repository.today()
+    var updated = 0
+    pinned.forEach { (_, size, ids) ->
         ids.forEach { id ->
             runCatching { manager.updateAppWidget(id, WidgetViews.build(appContext, id, size, state)) }
                 .onFailure { Log.w(TAG, "update failed for $id: ${it.message}") }

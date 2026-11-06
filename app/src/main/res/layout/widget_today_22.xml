@@ -20,11 +20,12 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/today_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/widget_today_upper"
-                android:textColor="#55241F19"
-                android:textSize="8sp" />
+                android:textColor="#6E6255"
+                android:textSize="9sp" />
 
             <TextView
                 android:id="@+id/plan"

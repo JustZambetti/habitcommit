@@ -24,7 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
-                android:textColor="#55241F19"
+                android:textColor="#6E6255"
                 android:textSize="9sp" />
 
             <TextView
@@ -50,7 +50,7 @@
                 android:paddingBottom="2dp"
                 android:text="@string/widget_plan_file"
                 android:textColor="#9A4E28"
-                android:textSize="8sp" />
+                android:textSize="9sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -73,8 +73,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
-                android:textColor="#55241F19"
-                android:textSize="8sp" />
+                android:textColor="#6E6255"
+                android:textSize="9sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -135,8 +135,8 @@
             android:layout_marginStart="3dp"
             android:maxLines="1"
             android:text="@string/widget_saved"
-            android:textColor="#55241F19"
-            android:textSize="8.5sp" />
+            android:textColor="#6E6255"
+            android:textSize="9sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -147,10 +147,11 @@
         android:orientation="horizontal">
 
         <TextView
+            android:id="@+id/tomorrow_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/widget_tomorrow"
-            android:textColor="#8A241F19"
+            android:textColor="#6E6255"
             android:textSize="9sp" />
 
         <TextView
@@ -173,8 +174,8 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="#55241F19"
-            android:textSize="8sp" />
+            android:textColor="#6E6255"
+            android:textSize="9sp" />
     </LinearLayout>
 
     <LinearLayout

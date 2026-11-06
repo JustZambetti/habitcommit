@@ -15,7 +15,6 @@ data class CheckUi(
     val def: CheckDef,
     /** 0 = untouched, 1 = done for binary metrics, 1..max for rating metrics. */
     val value: Int,
-    val lastAt: Instant?,
     val timeLabel: String?,
 ) {
     val done: Boolean get() = value > 0
@@ -25,7 +24,6 @@ data class HistoryMetric(
     val def: CheckDef,
     /** One entry per day in [HistoryState.days]; null when the metric was not in that day's plan. */
     val values: List<Int?>,
-    val plannedDays: Int,
     val activeDays: Int,
 ) {
     /** Mean of the recorded values above zero; null for binary metrics or when never recorded. */
@@ -63,8 +61,6 @@ data class TodayState(
     val heat: List<Int>,
     val tomorrowPlan: PlanDef?,
     val tomorrowPreview: String,
-    val source: PlanSource,
-    val modifiedByOverride: Boolean,
     val demoMode: Boolean,
     val configError: String?,
     val zone: ZoneId,
@@ -85,6 +81,17 @@ class HabitRepository(private val context: Context) {
     @Volatile
     private var cachedConfig: HabitsConfig? = null
 
+    /**
+     * Immutable snapshot of the journal for the current process. A widget tap
+     * never re-parses every month on the main thread; [setValue] appends to the
+     * snapshot so subsequent refreshes stay cheap.
+     */
+    @Volatile
+    private var eventsCache: List<CheckEvent>? = null
+
+    private fun events(): List<CheckEvent> =
+        eventsCache ?: eventLog.readAll().also { eventsCache = it }
+
     @Volatile
     var configError: String? = null
         private set
@@ -103,15 +110,12 @@ class HabitRepository(private val context: Context) {
         synchronized(configLock) {
             if (configFile.exists()) return
             val sample = readSample()
-            configFile.writeText(sample)
+            configFile.writeAtomically(sample)
             cachedConfig = null
 
             if (!eventLog.hasAnyEvents()) {
                 DemoSeeder.seed(this)
-                prefs.edit()
-                    .putBoolean(KEY_DEMO_MODE, true)
-                    .putBoolean(KEY_DEMO_SEEDED, true)
-                    .apply()
+                prefs.edit().putBoolean(KEY_DEMO_MODE, true).apply()
             }
         }
     }
@@ -121,7 +125,7 @@ class HabitRepository(private val context: Context) {
         synchronized(configLock) {
             cachedConfig?.let { return it }
             if (!configFile.exists()) {
-                configFile.writeText(readSample())
+                configFile.writeAtomically(readSample())
             }
             val text = configFile.readText()
             return try {
@@ -136,13 +140,15 @@ class HabitRepository(private val context: Context) {
         }
     }
 
-    fun configText(): String = if (configFile.exists()) configFile.readText() else ""
+    fun configText(): String = synchronized(configLock) {
+        if (configFile.exists()) configFile.readText() else ""
+    }
 
     fun saveConfig(text: String): Result<Unit> {
         return try {
             val parsed = HabitsConfig.parse(text, configMessages)
             synchronized(configLock) {
-                configFile.writeText(text)
+                configFile.writeAtomically(text)
                 cachedConfig = parsed
                 configError = null
             }
@@ -164,8 +170,7 @@ class HabitRepository(private val context: Context) {
         val resolved = PlanResolver.resolve(config, day)
             ?: error(context.getString(R.string.error_no_plan))
 
-        val events = eventLog.readAll()
-        val latest = latestEvents(events)
+        val latest = latestEvents(events())
         val timeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(zone)
 
         val metrics = resolved.metrics.map { check ->
@@ -174,7 +179,6 @@ class HabitRepository(private val context: Context) {
             CheckUi(
                 def = check,
                 value = value,
-                lastAt = event?.occurredAt,
                 // An untouched check shows no time: the timestamp marks the last
                 // value it was given.
                 timeLabel = if (value > 0) event?.occurredAt?.let(timeFormatter::format) else null,
@@ -193,12 +197,10 @@ class HabitRepository(private val context: Context) {
             metrics = metrics,
             doneCount = metrics.count { it.done },
             total = metrics.size,
-            streak = computeStreak(day, events),
+            streak = computeStreak(config, day, latest),
             heat = computeHeat(config, day, latest),
             tomorrowPlan = tomorrow?.plan,
             tomorrowPreview = tomorrowPreview,
-            source = resolved.source,
-            modifiedByOverride = resolved.modified,
             demoMode = prefs.getBoolean(KEY_DEMO_MODE, false),
             configError = configError,
             zone = zone,
@@ -211,7 +213,7 @@ class HabitRepository(private val context: Context) {
         val zone = config.zone
         val end = today ?: LocalDate.now(zone)
         val dates = (days - 1 downTo 0).map { end.minusDays(it.toLong()) }
-        val latest = latestEvents(eventLog.readAll())
+        val latest = latestEvents(events())
         val plans = dates.associateWith { PlanResolver.resolve(config, it) }
 
         val metrics = config.metrics.values.mapNotNull { def ->
@@ -226,7 +228,6 @@ class HabitRepository(private val context: Context) {
                 HistoryMetric(
                     def = def,
                     values = values,
-                    plannedDays = values.count { it != null },
                     activeDays = values.count { (it ?: 0) > 0 },
                 )
             }
@@ -267,6 +268,7 @@ class HabitRepository(private val context: Context) {
             zoneId = config.zone.id,
         )
         eventLog.append(event)
+        eventsCache = eventsCache?.plus(event)
         // Queue for GitHub but never block the tap on the network.
         (context.applicationContext as? HabitCommitApp)?.recordSyncEvent(event)
         return stored
@@ -278,30 +280,27 @@ class HabitRepository(private val context: Context) {
         val config = config()
         require(config.metrics.containsKey(checkId)) { "Check sconosciuto: $checkId" }
         val day = date ?: LocalDate.now(config.zone)
-        val latest = latestEvents(eventLog.readAll())[day to checkId]
+        val latest = latestEvents(events())[day to checkId]
         val newValue = if ((latest?.value ?: 0) > 0) 0 else 1
         setValue(checkId, newValue, day)
         return newValue == 1
     }
 
-    fun planById(planId: String): PlanDef? = config().plans[planId]
-
     fun clearEvents() {
         eventLog.clear()
+        eventsCache = emptyList()
         // Cleared values must not be re-uploaded on the next sync.
         (context.applicationContext as? HabitCommitApp)?.clearSyncOutbox()
-        prefs.edit()
-            .putBoolean(KEY_DEMO_MODE, false)
-            .putBoolean(KEY_DEMO_SEEDED, true)
-            .apply()
+        prefs.edit().putBoolean(KEY_DEMO_MODE, false).apply()
     }
 
+    /** Replaces the local journal with a fresh demo sample (never appends to it). */
     fun seedDemo() {
+        eventLog.clear()
+        eventsCache = emptyList()
+        (context.applicationContext as? HabitCommitApp)?.clearSyncOutbox()
         DemoSeeder.seed(this)
-        prefs.edit()
-            .putBoolean(KEY_DEMO_MODE, true)
-            .putBoolean(KEY_DEMO_SEEDED, true)
-            .apply()
+        prefs.edit().putBoolean(KEY_DEMO_MODE, true).apply()
     }
 
     internal fun resolvedDay(date: LocalDate): ResolvedDay? =
@@ -318,16 +317,16 @@ class HabitRepository(private val context: Context) {
         val instant = date.atTime(hour.coerceIn(0, 23), minute.coerceIn(0, 59))
             .atZone(config.zone)
             .toInstant()
-        eventLog.append(
-            CheckEvent(
-                id = UUID.randomUUID().toString(),
-                checkId = checkId,
-                localDate = date,
-                value = value,
-                occurredAt = instant,
-                zoneId = config.zone.id,
-            ),
+        val event = CheckEvent(
+            id = UUID.randomUUID().toString(),
+            checkId = checkId,
+            localDate = date,
+            value = value,
+            occurredAt = instant,
+            zoneId = config.zone.id,
         )
+        eventLog.append(event)
+        eventsCache = eventsCache?.plus(event)
     }
 
     private fun latestEvents(events: List<CheckEvent>): Map<Pair<LocalDate, String>, CheckEvent> {
@@ -340,19 +339,18 @@ class HabitRepository(private val context: Context) {
             }
     }
 
-    private fun computeStreak(today: LocalDate, events: List<CheckEvent>): Int {
-        val activeDates = events
-            .asSequence()
-            .filter { it.value > 0 && !it.localDate.isAfter(today) }
-            .map { it.localDate }
-            .toSet()
-        var cursor = if (today in activeDates) today else today.minusDays(1)
-        var streak = 0
-        while (cursor in activeDates) {
-            streak++
-            cursor = cursor.minusDays(1)
-        }
-        return streak
+    /**
+     * A day counts only for the metrics in that day's plan and only with their
+     * latest value, so a metric that was checked and later unchecked does not
+     * keep the streak alive.
+     */
+    private fun computeStreak(
+        config: HabitsConfig,
+        today: LocalDate,
+        latest: Map<Pair<LocalDate, String>, CheckEvent>,
+    ): Int = Streak.count(today) { date ->
+        val planned = PlanResolver.resolve(config, date)?.metrics.orEmpty()
+        planned.any { (latest[date to it.id]?.value ?: 0) > 0 }
     }
 
     private fun computeHeat(
@@ -380,6 +378,5 @@ class HabitRepository(private val context: Context) {
     companion object {
         private const val PREFS = "habitcommit"
         private const val KEY_DEMO_MODE = "demo_mode"
-        private const val KEY_DEMO_SEEDED = "demo_seeded"
     }
 }

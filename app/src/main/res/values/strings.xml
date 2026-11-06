@@ -7,22 +7,26 @@
     <string name="widget_42_name">HabitCommit · Compact</string>
     <string name="widget_22_name">HabitCommit · Focus</string>
     <string name="widget_24_name">HabitCommit · Vertical</string>
-    <string name="widget_44_description">Today\'s plan, five checks, streak and configuration.</string>
-    <string name="widget_42_description">Four checks for today and the streak, in a compact layout.</string>
-    <string name="widget_22_description">Progress, streak and next check, in a minimal layout.</string>
-    <string name="widget_24_description">Four checks for today in a vertical layout, with a quick button.</string>
+    <string name="widget_44_description">Today\'s plan, five metrics, streak and settings.</string>
+    <string name="widget_42_description">Four metrics for today and the streak, in a compact layout.</string>
+    <string name="widget_22_description">Progress and streak, in a minimal layout.</string>
+    <string name="widget_24_description">Four metrics for today in a vertical layout, with a quick button.</string>
 
     <!-- Widget contents -->
     <string name="widget_today_upper">TODAY</string>
     <string name="widget_empty">No metrics for today</string>
     <string name="widget_open_app">Open app</string>
     <string name="widget_open_app_upper">OPEN APP</string>
-    <string name="widget_config">Configure</string>
-    <string name="widget_saved">saved ✓</string>
+    <string name="widget_config">Settings</string>
+    <string name="widget_saved">on device ✓</string>
     <string name="widget_plan_file">PLAN · habits.json</string>
     <string name="widget_tomorrow">Tomorrow</string>
     <string name="widget_extra_in_app">+%1$d in app</string>
     <string name="widget_streak_abbr">%1$d d</string>
+    <string name="widget_desc_binary_done">%1$s, done</string>
+    <string name="widget_desc_binary_open">%1$s, not done</string>
+    <string name="widget_desc_rating">%1$s, rating %2$d of %3$d</string>
+    <string name="star_empty">☆</string>
     <plurals name="widget_streak_row">
         <item quantity="one">%d day in a row</item>
         <item quantity="other">%d days in a row</item>
@@ -35,7 +39,7 @@
 
     <string name="demo_badge">DEMO</string>
     <string name="demo_local">Local sample data</string>
-    <string name="action_clear">Clear</string>
+    <string name="action_remove_demo">Remove demo</string>
     <string name="config_invalid_title">The configuration isn\'t valid</string>
     <string name="config_invalid_hint">Fix habits.json in your GitHub repo: the app downloads it automatically.</string>
 
@@ -44,15 +48,12 @@
     <string name="saved_locally">saved locally ✓</string>
     <string name="tomorrow">TOMORROW</string>
 
-    <string name="source_date_override">TODAY\'S OVERRIDE</string>
-    <string name="source_weekday">TODAY\'S PLAN · HABITS.JSON</string>
-    <string name="source_default">DEFAULT PLAN</string>
-    <string name="source_local_override">PLAN · HABITS.JSON</string>
-
     <plurals name="streak_days">
         <item quantity="one">%d day streak</item>
         <item quantity="other">%d-day streak</item>
     </plurals>
+
+    <string name="rating_star">Rate %1$d of %2$d</string>
 
     <string name="widget_card_title">Home-screen widget</string>
     <string name="widget_card_desc">Each tap updates the data immediately. Add it to your home screen:</string>
@@ -65,13 +66,8 @@
         <item quantity="one">%d queued</item>
         <item quantity="other">%d queued</item>
     </plurals>
-    <string name="sync_card_desc">Connect a private repo to keep the history in git. Values stay local until there is a network.</string>
     <string name="sync_manage">Manage sync</string>
-    <string name="sync_connect">Connect repo</string>
-    <string name="sync_now_short">Sync</string>
 
-    <string name="config_card_subtitle">Metrics, plans and schedule</string>
-    <string name="config_card_desc">Today\'s plan is resolved from this file. With sync on, every recorded value is queued and committed to your GitHub repo.</string>
     <string name="action_reload_demo">Reload demo</string>
     <string name="action_clear_metrics">Clear all local metrics</string>
 
@@ -84,13 +80,13 @@
     <string name="settings_data">Data</string>
     <string name="settings_data_sub">Demo values and local clearing</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_sub">Version and privacy</string>
+    <string name="settings_about_sub">Version, license and data</string>
     <string name="widget_format_plan">4×4 · Plan</string>
     <string name="widget_format_compact">4×2 · Compact</string>
     <string name="widget_format_vertical">2×4 · Vertical</string>
     <string name="widget_format_focus">2×2 · Focus</string>
     <string name="action_add">Add</string>
-    <string name="demo_clear_title">Clear demo data?</string>
+    <string name="demo_clear_title">Remove demo data?</string>
     <string name="demo_clear_body">The sample values will be deleted. You can start recording from scratch.</string>
     <string name="data_seed_title">Reload demo data?</string>
     <string name="data_seed_body">Current local values are replaced by a fresh sample. The plan stays the same.</string>
@@ -103,13 +99,19 @@
 
     <!-- History -->
     <string name="history_heading">History</string>
-    <string name="history_range">Last %1$d days · %2$s</string>
+    <plurals name="history_range">
+        <item quantity="one">Last %1$d day · %2$s</item>
+        <item quantity="other">Last %1$d days · %2$s</item>
+    </plurals>
     <string name="range_chip">%1$d d</string>
     <string name="history_loading">Loading history…</string>
     <string name="history_empty">No data yet: record a value from the widget and come back.</string>
     <string name="history_legend">Empty square: not in that day\'s plan. Pale: planned but not recorded. Filled: done. Ratings show a dot chart: dots on adjacent days are joined.</string>
-    <string name="history_metric_days">%1$d/%2$d days</string>
-    <string name="history_average">★ %1$s</string>
+    <plurals name="history_metric_days">
+        <item quantity="one">%1$d of %2$d day done</item>
+        <item quantity="other">%1$d of %2$d days done</item>
+    </plurals>
+    <string name="history_average">avg ★ %1$s</string>
     <string name="history_recent">RECENT DAYS</string>
     <string name="history_today">today</string>
 
@@ -132,6 +134,8 @@
     <string name="action_sync_now">Sync now</string>
     <string name="action_download_config">Download habits.json</string>
     <string name="action_disconnect">Disconnect repo</string>
+    <string name="disconnect_title">Disconnect GitHub sync?</string>
+    <string name="disconnect_body">The token is deleted from this device. Values recorded on the phone stay; values still queued will be uploaded if you connect a repository again.</string>
     <string name="sync_queued">Queued: %1$d</string>
     <string name="sync_last_at">last sync %1$s</string>
     <string name="sync_queued_toast">Sync queued</string>
@@ -145,7 +149,7 @@
     <string name="action_cancel">Cancel</string>
     <string name="config_pulled">habits.json updated from the repo</string>
     <string name="error_token_required">Enter a GitHub PAT</string>
-    <string name="error_no_repo">The PAT doesn\'t see any repository. Add one to the token on GitHub and try again.</string>
+    <string name="error_no_repo">The PAT doesn\'t see any repository. Grant it access to one on GitHub and try again.</string>
     <string name="error_verification_failed">Verification failed</string>
     <string name="error_save_failed">Save failed</string>
     <string name="error_no_write">The token isn\'t allowed to write to %1$s</string>
@@ -156,7 +160,10 @@
     <string name="sync_saved">Connected to %1$s (%2$s, %3$s/)</string>
     <string name="sync_disconnected">Sync disconnected</string>
     <string name="sync_all_synced">Everything synced</string>
-    <string name="sync_syncing_remaining">Syncing… %1$d left</string>
+    <plurals name="sync_syncing_remaining">
+        <item quantity="one">Syncing… %d left</item>
+        <item quantity="other">Syncing… %d left</item>
+    </plurals>
     <string name="sync_token_missing">Token missing: reconnect the repo</string>
     <string name="sync_failed">Sync failed</string>
     <string name="error_sync_not_configured">Sync is not configured</string>
@@ -169,12 +176,10 @@
     <string name="error_journal_conflict">Journal updated by another sync</string>
     <string name="error_config_missing">%1$s does not exist on branch %2$s</string>
     <string name="error_not_a_file">%1$s is not a file</string>
-    <string name="error_owner_invalid">Invalid GitHub owner</string>
-    <string name="error_repo_invalid">Invalid repository name</string>
     <string name="error_branch_invalid">Invalid branch</string>
     <string name="error_journal_dir_invalid">Invalid journal folder</string>
 
-    <!-- habits.json validation, shown in the config editor -->
+    <!-- habits.json validation -->
     <string name="error_no_plan">No plan configured</string>
     <string name="config_error_invalid_json">Invalid JSON: %1$s</string>
     <string name="config_error_schema">Unsupported schema: %1$d (expected %2$d)</string>

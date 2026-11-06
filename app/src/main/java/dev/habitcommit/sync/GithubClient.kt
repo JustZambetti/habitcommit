@@ -185,8 +185,8 @@ class GithubClient(
             )
             when (response.code) {
                 200, 201 -> Result.success(Unit)
-                409 -> Result.failure(ConflictException("commit in conflitto"))
-                422 -> Result.failure(ConflictException("sha del file non aggiornato"))
+                409 -> Result.failure(ConflictException("commit conflict"))
+                422 -> Result.failure(ConflictException("stale file sha"))
                 else -> Result.failure(GithubException(errorFor(response), retryable = response.code >= 500))
             }
         } catch (e: Exception) {
@@ -236,6 +236,8 @@ class GithubClient(
                 connectTimeout = 20_000
                 readTimeout = 20_000
                 useCaches = false
+                // Never follow a redirect: the PAT must only travel to api.github.com.
+                instanceFollowRedirects = false
                 setRequestProperty("Authorization", "Bearer $token")
                 setRequestProperty("Accept", "application/vnd.github+json")
                 setRequestProperty("X-GitHub-Api-Version", "2022-11-28")

@@ -4,6 +4,6 @@
     android:layout_width="15dp"
     android:layout_height="match_parent"
     android:gravity="center"
-    android:text="☆"
+    android:text="@string/star_empty"
     android:textColor="#C9BFAF"
     android:textSize="13sp" />

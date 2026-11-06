@@ -88,6 +88,7 @@ fun SyncScreen(
     var message by remember { mutableStateOf<String?>(null) }
     var isError by remember { mutableStateOf(false) }
     var confirmPull by remember { mutableStateOf(false) }
+    var confirmDisconnect by remember { mutableStateOf(false) }
     var pickerOpen by remember { mutableStateOf(false) }
 
     var measuredRepos by remember { mutableStateOf<List<RepoSummary>>(emptyList()) }
@@ -133,6 +134,8 @@ fun SyncScreen(
         val loaded = withContext(Dispatchers.IO) {
             GithubClient.listRepositories(context.resources, candidate)
         }
+        // A slow answer for an older token must not overwrite a newer search.
+        if (token.trim() != candidate) return@LaunchedEffect
         loaded.fold(
             onSuccess = { list ->
                 measuredRepos = list
@@ -194,11 +197,26 @@ fun SyncScreen(
                                         val remote = withContext(Dispatchers.IO) {
                                             syncManager.downloadConfig()
                                         }
-                                        remote.onSuccess { text ->
-                                            repository.saveConfig(text).onSuccess {
-                                                onConfigReplaced()
-                                            }
-                                        }
+                                        remote.fold(
+                                            onSuccess = { text ->
+                                                repository.saveConfig(text).onSuccess {
+                                                    onConfigReplaced()
+                                                }
+                                            },
+                                            onFailure = {
+                                                // The connection is saved; only the first
+                                                // config download failed.
+                                                report(
+                                                    context.getString(
+                                                        R.string.sync_saved,
+                                                        info.fullName,
+                                                        valid.branch,
+                                                        valid.journalDir,
+                                                    ) + " · " + context.getString(R.string.error_download_failed),
+                                                    true,
+                                                )
+                                            },
+                                        )
                                     },
                                     onFailure = {
                                         report(
@@ -245,7 +263,7 @@ fun SyncScreen(
                         stringResource(R.string.not_connected)
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                 )
             }
             TextButton(onClick = onClose) { Text(stringResource(R.string.close)) }
@@ -281,7 +299,7 @@ fun SyncScreen(
                     Text(
                         text = stringResource(R.string.pat_saved),
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 10.sp,
+                        fontSize = 11.sp,
                     )
                 }
             } else {
@@ -296,15 +314,15 @@ fun SyncScreen(
         ) {
             Text(
                 text = stringResource(R.string.pat_help),
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.primary,
             )
         }
         Text(
             text = stringResource(R.string.pat_requirement),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 10.sp,
-            lineHeight = 14.sp,
+            fontSize = 11.sp,
+            lineHeight = 15.sp,
         )
 
         message?.let {
@@ -312,8 +330,8 @@ fun SyncScreen(
             Text(
                 text = it,
                 color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                fontSize = 12.sp,
-                lineHeight = 17.sp,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
             )
         }
 
@@ -324,13 +342,13 @@ fun SyncScreen(
                     text = stringResource(R.string.repo_section),
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 9.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 1.5.sp,
                 )
                 if (measuredRepos.size > 1) {
                     TextButton(onClick = { pickerOpen = true }) {
-                        Text(stringResource(R.string.action_change_repo), fontSize = 11.sp)
+                        Text(stringResource(R.string.action_change_repo), fontSize = 12.sp)
                     }
                 }
             }
@@ -339,7 +357,7 @@ fun SyncScreen(
                     value = current.owner,
                     onValueChange = {},
                     modifier = Modifier.weight(1f),
-                    label = { Text(stringResource(R.string.repo_owner), fontSize = 11.sp) },
+                    label = { Text(stringResource(R.string.repo_owner), fontSize = 12.sp) },
                     singleLine = true,
                     enabled = false,
                 )
@@ -347,7 +365,7 @@ fun SyncScreen(
                     value = current.name,
                     onValueChange = {},
                     modifier = Modifier.weight(1f),
-                    label = { Text(stringResource(R.string.repo_name), fontSize = 11.sp) },
+                    label = { Text(stringResource(R.string.repo_name), fontSize = 12.sp) },
                     singleLine = true,
                     enabled = false,
                 )
@@ -358,14 +376,14 @@ fun SyncScreen(
                     value = branch,
                     onValueChange = { branch = it; message = null },
                     modifier = Modifier.weight(1f),
-                    label = { Text(stringResource(R.string.repo_branch), fontSize = 11.sp) },
+                    label = { Text(stringResource(R.string.repo_branch), fontSize = 12.sp) },
                     singleLine = true,
                 )
                 OutlinedTextField(
                     value = path,
                     onValueChange = { path = it; message = null },
                     modifier = Modifier.weight(1f),
-                    label = { Text(stringResource(R.string.habitcommit_path), fontSize = 11.sp) },
+                    label = { Text(stringResource(R.string.habitcommit_path), fontSize = 12.sp) },
                     singleLine = true,
                 )
             }
@@ -390,14 +408,14 @@ fun SyncScreen(
                     modifier = Modifier.weight(1f),
                     enabled = !busy,
                 ) {
-                    Text(stringResource(R.string.action_sync_now), fontSize = 12.sp)
+                    Text(stringResource(R.string.action_sync_now), fontSize = 13.sp)
                 }
                 OutlinedButton(
                     onClick = { confirmPull = true },
                     modifier = Modifier.weight(1f),
                     enabled = !busy,
                 ) {
-                    Text(stringResource(R.string.action_download_config), fontSize = 12.sp)
+                    Text(stringResource(R.string.action_download_config), fontSize = 13.sp)
                 }
             }
             Spacer(Modifier.height(10.dp))
@@ -410,26 +428,24 @@ fun SyncScreen(
                     }
                 },
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
             )
             if (!status.lastOk && status.lastMessage != null) {
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = status.lastMessage.orEmpty(),
                     color = MaterialTheme.colorScheme.error,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                 )
             }
             Spacer(Modifier.height(6.dp))
             TextButton(
-                onClick = {
-                    syncManager.disconnect()
-                    token = ""
-                    measuredRepos = emptyList()
-                    report(context.getString(R.string.sync_disconnected_toast), false)
-                },
+                onClick = { confirmDisconnect = true },
             ) {
-                Text(stringResource(R.string.action_disconnect))
+                Text(
+                    text = stringResource(R.string.action_disconnect),
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
         }
 
@@ -455,13 +471,13 @@ fun SyncScreen(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(summary.fullName, fontSize = 13.sp)
+                                Text(summary.fullName, fontSize = 14.sp)
                                 Text(
                                     text = stringResource(
                                         if (summary.isPrivate) R.string.repo_private else R.string.repo_public,
                                     ),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 10.sp,
+                                    fontSize = 11.sp,
                                 )
                             }
                         }
@@ -471,6 +487,35 @@ fun SyncScreen(
             confirmButton = {
                 TextButton(onClick = { pickerOpen = false }) {
                     Text(stringResource(R.string.close))
+                }
+            },
+        )
+    }
+
+    if (confirmDisconnect) {
+        AlertDialog(
+            onDismissRequest = { confirmDisconnect = false },
+            title = { Text(stringResource(R.string.disconnect_title)) },
+            text = { Text(stringResource(R.string.disconnect_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDisconnect = false
+                        syncManager.disconnect()
+                        token = ""
+                        measuredRepos = emptyList()
+                        report(context.getString(R.string.sync_disconnected_toast), false)
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.action_disconnect),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDisconnect = false }) {
+                    Text(stringResource(R.string.action_cancel))
                 }
             },
         )

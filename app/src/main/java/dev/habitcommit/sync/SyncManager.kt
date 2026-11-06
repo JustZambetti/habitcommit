@@ -2,7 +2,6 @@ package dev.habitcommit.sync
 
 import android.content.Context
 import dev.habitcommit.R
-import dev.habitcommit.data.CheckEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,16 +34,6 @@ class SyncManager(
 
     private val _status = MutableStateFlow(readStatus())
     val status: StateFlow<SyncStatus> = _status.asStateFlow()
-
-    fun isConfigured(): Boolean = settings.target() != null && tokenStore.hasToken()
-
-    /** Called after a value is journaled locally. Never performs network I/O. */
-    fun onEventRecorded(event: CheckEvent) {
-        val line = RemoteJournal.eventLine(event, settings.deviceId)
-        outbox.add(event.id, event.localDate, line)
-        refresh()
-        // Values wait for the daily flush; "Sync now" still forces a run.
-    }
 
     fun saveConnection(target: GithubTarget, token: String?): Result<Unit> {
         return try {
@@ -81,7 +70,8 @@ class SyncManager(
     fun disconnect() {
         tokenStore.clear()
         settings.clearTarget()
-        GithubSyncScheduler.cancelDaily(appContext)
+        // Includes a "Sync now" request that may already be queued.
+        GithubSyncScheduler.cancelAll(appContext)
         prefs.edit()
             .putString(KEY_MESSAGE, appContext.getString(R.string.sync_disconnected))
             .putBoolean(KEY_OK, true)
@@ -125,7 +115,11 @@ class SyncManager(
             .putString(
                 KEY_MESSAGE,
                 if (pendingLeft > 0) {
-                    appContext.getString(R.string.sync_syncing_remaining, pendingLeft)
+                    appContext.resources.getQuantityString(
+                        R.plurals.sync_syncing_remaining,
+                        pendingLeft,
+                        pendingLeft,
+                    )
                 } else {
                     appContext.getString(R.string.sync_all_synced)
                 },

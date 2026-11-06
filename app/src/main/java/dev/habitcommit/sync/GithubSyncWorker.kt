@@ -63,7 +63,7 @@ class GithubSyncWorker(
                 Result.failure()
             }
         }
-        batch.forEach { manager.outbox.remove(it.id) }
+        manager.outbox.removeAll(batch.map { it.id })
 
         val remaining = manager.outbox.count()
         manager.recordSuccess(remaining)
@@ -104,8 +104,11 @@ object GithubSyncScheduler {
      */
     fun ensureDaily(context: Context) {
         WorkBootstrap.ensure(context)
+        val zone = runCatching {
+            (context.applicationContext as HabitCommitApp).repository.config().zone
+        }.getOrDefault(java.time.ZoneId.systemDefault())
         val request = PeriodicWorkRequestBuilder<GithubSyncWorker>(1, TimeUnit.DAYS)
-            .setInitialDelay(delayUntilNextDailyRun(), TimeUnit.MILLISECONDS)
+            .setInitialDelay(delayUntilNextDailyRun(zone), TimeUnit.MILLISECONDS)
             .setConstraints(networkConstraints())
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
             .addTag(TAG)
@@ -119,13 +122,22 @@ object GithubSyncScheduler {
         WorkManager.getInstance(context.applicationContext).cancelUniqueWork(UNIQUE_DAILY)
     }
 
+    /** Cancels every pending flush, including a running "Sync now" request. */
+    fun cancelAll(context: Context) {
+        WorkBootstrap.ensure(context)
+        WorkManager.getInstance(context.applicationContext).apply {
+            cancelUniqueWork(UNIQUE_DAILY)
+            cancelUniqueWork(UNIQUE_WORK)
+        }
+    }
+
     private fun networkConstraints(): Constraints =
         Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-    private fun delayUntilNextDailyRun(): Long {
-        val now = ZonedDateTime.now()
+    private fun delayUntilNextDailyRun(zone: java.time.ZoneId): Long {
+        val now = ZonedDateTime.now(zone)
         var next = now.withHour(DAILY_HOUR).withMinute(0).withSecond(0).withNano(0)
         if (!next.isAfter(now)) next = next.plusDays(1)
         return Duration.between(now, next).toMillis()

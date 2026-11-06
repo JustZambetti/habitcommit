@@ -1,11 +1,12 @@
 package dev.habitcommit
 
+import android.annotation.SuppressLint
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.SystemClock
 import android.util.Log
+import androidx.core.content.ContextCompat
 import dev.habitcommit.data.CheckEvent
 import dev.habitcommit.data.HabitRepository
 import dev.habitcommit.sync.GithubSyncScheduler
@@ -39,6 +40,9 @@ class HabitCommitApp : Application() {
 
     private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    // ContextCompat.RECEIVER_NOT_EXPORTED is the correct constant on every
+    // supported API, but lint's WrongConstant check only knows the platform one.
+    @SuppressLint("WrongConstant")
     override fun onCreate() {
         val started = SystemClock.elapsedRealtime()
         super.onCreate()
@@ -54,7 +58,7 @@ class HabitCommitApp : Application() {
         syncScope.launch { WidgetRefreshScheduler.ensureScheduled(this@HabitCommitApp) }
         // These implicit broadcasts are not delivered to manifest receivers on
         // modern Android, so the warm-up only works while the process is alive
-        // (cached or frozen) � which covers all but the first tap after boot.
+        // (cached or frozen) — which covers all but the first tap after boot.
         // SCREEN_ON fires while the keyguard is still up, earlier than
         // USER_PRESENT, so the process is warm by the time the user unlocks.
         registerReceiver(
@@ -63,7 +67,7 @@ class HabitCommitApp : Application() {
                 addAction(Intent.ACTION_SCREEN_ON)
                 addAction(Intent.ACTION_USER_PRESENT)
             },
-            Context.RECEIVER_NOT_EXPORTED,
+            ContextCompat.RECEIVER_NOT_EXPORTED,
         )
         // A persisted sync job can start the process in the background, and
         // WorkManager's SystemJobService needs it initialised first. The check
@@ -84,6 +88,11 @@ class HabitCommitApp : Application() {
             // A full disk must not lose the local check-in that was already written.
             Log.w("HabitCommitSync", "outbox add failed: ${e.javaClass.simpleName}")
             return
+        }
+        // The count shown on the Today banner must follow the tap. Reading the
+        // outbox and the token stays off the tap path's thread.
+        if (syncSettings.target() != null) {
+            syncScope.launch { syncManager.refresh() }
         }
         // Queued values are committed together by the daily sync run, so the
         // tap path never touches WorkManager.
@@ -110,8 +119,17 @@ class HabitCommitApp : Application() {
             if (!force && now - syncSettings.configPullAt() < CONFIG_PULL_THROTTLE_SECONDS) {
                 return@withContext false
             }
-            syncSettings.setConfigPullAt(now)
-            val remote = syncManager.downloadConfig().getOrNull() ?: return@withContext false
+            val remoteResult = syncManager.downloadConfig()
+            // Throttle the next attempt only once this one finished; a failure
+            // is not silently equal to "no change".
+            syncSettings.setConfigPullAt(Instant.now().epochSecond)
+            val remote = remoteResult.getOrNull() ?: run {
+                Log.w(
+                    "HabitCommitSync",
+                    "config pull failed: ${remoteResult.exceptionOrNull()?.javaClass?.simpleName}",
+                )
+                return@withContext false
+            }
             if (remote == repository.configText()) return@withContext false
             repository.saveConfig(remote).fold(
                 onSuccess = {

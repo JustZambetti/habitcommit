@@ -4,5 +4,5 @@
     android:layout_height="36dp"
     android:gravity="center_vertical"
     android:text="@string/widget_empty"
-    android:textColor="#8A241F19"
+    android:textColor="#6E6255"
     android:textSize="12sp" />

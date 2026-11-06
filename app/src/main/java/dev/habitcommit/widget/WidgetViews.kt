@@ -4,9 +4,9 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.net.toUri
 import dev.habitcommit.MainActivity
 import dev.habitcommit.R
 import dev.habitcommit.data.CheckType
@@ -47,6 +47,23 @@ object WidgetViews {
 
         views.setOnClickPendingIntent(R.id.header, openApp)
 
+        // Static labels are set here too: per-app locale can differ from the
+        // launcher's, and layout resources would otherwise use the system one.
+        if (size == WidgetSize.SMALL) {
+            views.setTextViewText(R.id.today_label, context.getString(R.string.widget_today_upper))
+            views.setTextViewText(R.id.open, context.getString(R.string.widget_open_app_upper))
+        } else if (size != WidgetSize.MEDIUM) {
+            views.setTextViewText(R.id.open, context.getString(R.string.widget_open_app))
+        }
+        if (size == WidgetSize.LARGE) {
+            views.setTextViewText(R.id.config, context.getString(R.string.widget_config))
+            views.setTextViewText(R.id.chip, context.getString(R.string.widget_plan_file))
+            views.setTextViewText(R.id.tomorrow_label, context.getString(R.string.widget_tomorrow))
+        }
+        if (size == WidgetSize.MEDIUM || size == WidgetSize.LARGE) {
+            views.setTextViewText(R.id.saved, context.getString(R.string.widget_saved))
+        }
+
         val showDate = size != WidgetSize.SMALL
         if (showDate) {
             val label = context.getString(R.string.widget_today_upper)
@@ -77,8 +94,13 @@ object WidgetViews {
                 views.setTextViewText(R.id.streak, context.getString(R.string.widget_streak_abbr, state.streak))
             }
             WidgetSize.SMALL -> {
-                val percent = (state.progress * 100).roundToInt()
-                views.setTextViewText(R.id.percent, "$percent%")
+                if (state.metrics.isEmpty()) {
+                    views.setTextViewText(R.id.plan, context.getString(R.string.widget_empty))
+                    views.setTextViewText(R.id.percent, "—")
+                } else {
+                    val percent = (state.progress * 100).roundToInt()
+                    views.setTextViewText(R.id.percent, "$percent%")
+                }
                 bindHeat(views, state.heat.takeLast(9), R.layout.widget_heat_cell_small)
                 val streak = context.resources.getQuantityString(
                     R.plurals.widget_streak_row,
@@ -94,7 +116,10 @@ object WidgetViews {
             views.setTextViewText(R.id.tomorrow_preview, state.tomorrowPreview)
             views.setOnClickPendingIntent(R.id.config, openConfig)
         }
-        views.setOnClickPendingIntent(R.id.open, openApp)
+        // The 4×2 layout has no button: its header already opens the app.
+        if (size != WidgetSize.MEDIUM) {
+            views.setOnClickPendingIntent(R.id.open, openApp)
+        }
         return views
     }
 
@@ -160,6 +185,13 @@ object WidgetViews {
             R.id.row_root,
             togglePendingIntent(context, appWidgetId, check.def.id),
         )
+        row.setContentDescription(
+            R.id.row_root,
+            context.getString(
+                if (check.done) R.string.widget_desc_binary_done else R.string.widget_desc_binary_open,
+                check.def.label,
+            ),
+        )
         return row
     }
 
@@ -188,6 +220,15 @@ object WidgetViews {
                 R.id.star,
                 setValuePendingIntent(context, appWidgetId, check.def.id, target),
             )
+            starView.setContentDescription(
+                R.id.star,
+                context.getString(
+                    R.string.widget_desc_rating,
+                    check.def.label,
+                    star,
+                    check.def.maxValue,
+                ),
+            )
             row.addView(R.id.row_stars, starView)
         }
         return row
@@ -209,7 +250,7 @@ object WidgetViews {
     private fun togglePendingIntent(context: Context, appWidgetId: Int, checkId: String): PendingIntent {
         val intent = Intent(context, WidgetActionReceiver::class.java).apply {
             action = WidgetActionReceiver.ACTION_TOGGLE
-            data = Uri.parse("habitcommit://toggle/$appWidgetId/$checkId")
+            data = "habitcommit://toggle/$appWidgetId/$checkId".toUri()
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra(WidgetActionReceiver.EXTRA_CHECK_ID, checkId)
         }
@@ -229,7 +270,7 @@ object WidgetViews {
     ): PendingIntent {
         val intent = Intent(context, WidgetActionReceiver::class.java).apply {
             action = WidgetActionReceiver.ACTION_SET
-            data = Uri.parse("habitcommit://set/$appWidgetId/$checkId/$value")
+            data = "habitcommit://set/$appWidgetId/$checkId/$value".toUri()
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra(WidgetActionReceiver.EXTRA_CHECK_ID, checkId)
             putExtra(WidgetActionReceiver.EXTRA_VALUE, value)
@@ -256,7 +297,7 @@ object WidgetViews {
 
     private fun openConfigPendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, MainActivity::class.java).apply {
-            data = Uri.parse("habitcommit://config")
+            data = "habitcommit://config".toUri()
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         return PendingIntent.getActivity(

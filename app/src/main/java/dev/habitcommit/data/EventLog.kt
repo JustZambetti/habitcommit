@@ -5,6 +5,7 @@ import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 data class CheckEvent(
     val id: String,
@@ -87,7 +88,7 @@ class EventLog(private val journalRoot: File) {
     }
 
     private fun fileFor(date: LocalDate): File {
-        val month = "%04d-%02d".format(date.year, date.monthValue)
+        val month = String.format(Locale.ROOT, "%04d-%02d", date.year, date.monthValue)
         return File(File(journalRoot, month), "local.jsonl")
     }
 }

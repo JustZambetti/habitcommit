@@ -1,10 +1,10 @@
 # Contributing to HabitCommit
 
-Thanks for looking. This project is at an early, deliberately narrow stage: the goal is to validate that a tap-only, plan-aware home-screen checklist is worth building before adding sync complexity. Feedback about whether you would actually use it is as valuable as a pull request.
+Thanks for looking. The project is at its first beta: a tap-only, plan-aware home-screen tracker with optional GitHub sync. Feedback about whether you would actually use it is as valuable as a pull request.
 
 ## Ways to help right now
 
-- **Try the smoke APK** and tell us what breaks on your launcher/OEM (Pixel, Samsung, Xiaomi, etc.).
+- **Try a build** and tell us what breaks on your launcher/OEM (Pixel, Samsung, Xiaomi, etc.), including light/dark theme and English/Italian/Romanian.
 - **Report a use case**: what checks change from day to day for you? What would today's plan look like on a workday, a weekend, a trip?
 - **Critique the mockups** in [`design/mocks/`](design/mocks) — readability, contrast, tap targets, text scaling.
 - **File issues** with: device, Android version, launcher, steps to reproduce, screenshot, and relevant `adb logcat` lines. Never paste tokens or personal notes.
@@ -17,25 +17,26 @@ Thanks for looking. This project is at an early, deliberately narrow stage: the 
 
 ```bash
 ./gradlew testDebugUnitTest
+./gradlew lintDebug
 ./gradlew assembleDebug
 ```
 
-Unit tests cover the config parser, validation messages and plan resolution (weekday schedule, date overrides, local overrides, DST boundaries). Add a test for every behavior change in `data/`.
+Unit tests cover the config parser, validation messages, plan resolution (weekday schedule, date overrides, local overrides, DST boundaries) and streak counting. Add a test for every behavior change in `data/` or `sync/`.
 
 ## Ground rules
 
-1. **No new network calls without a design issue.** The smoke build has no `INTERNET` permission on purpose.
+1. **No new network destinations without a design issue.** The only allowed host is `https://api.github.com`; the PAT must never reach another server and redirects stay disabled.
 2. **No analytics, crash reporting SDKs or proprietary dependencies.** F-Droid compatibility is a hard requirement.
 3. **Check-ins write locally first.** A slow or failing network must never block a tap.
-4. **Secrets never enter the UI tree or logs.** Future PAT handling goes through the Keystore module only.
+4. **Secrets never enter the UI tree or logs.** PAT handling goes through the Keystore module only.
 5. **Widget layouts stay cheap.** Use text/vector, avoid bitmaps, and stick to `RemoteViews`-safe view classes (`TextView`, `ImageView`, `LinearLayout`, `FrameLayout`). Dynamic containers must call `removeAllViews` before `addView`, because launchers may reapply the same `RemoteViews` instead of inflating it again.
-6. **Keep user-facing strings in Italian for now**, via `strings.xml` where practical. Localization comes with the first release.
+6. **Every user-facing string goes through resources**, with English as the default and matching Italian and Romanian entries in `values-it/` and `values-ro/`. Use plurals for counts.
 
 ## Commits and pull requests
 
 - Small, focused PRs with a clear "why" in the description.
 - Include a screenshot or short screen recording for UI changes.
-- Run `./gradlew testDebugUnitTest` before opening the PR.
+- Run `./gradlew testDebugUnitTest lintDebug` before opening the PR (CI runs both).
 - Sign off your commits (`git commit -s`) to certify the Developer Certificate of Origin. No CLA.
 - By contributing you agree your changes are licensed under Apache-2.0.
 

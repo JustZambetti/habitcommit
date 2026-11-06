@@ -15,8 +15,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:maxLines="1"
-        android:textColor="#55241F19"
-        android:textSize="8.5sp" />
+        android:textColor="#6E6255"
+        android:textSize="9sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -84,26 +84,6 @@
             android:textColor="#24543D"
             android:textSize="9.5sp" />
 
-        <FrameLayout
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
-
-        <ImageView
-            android:layout_width="4dp"
-            android:layout_height="4dp"
-            android:background="@drawable/widget_dot"
-            android:contentDescription="@null" />
-
-        <TextView
-            android:id="@+id/saved"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"
-            android:maxLines="1"
-            android:text="@string/widget_saved"
-            android:textColor="#55241F19"
-            android:textSize="8.5sp" />
     </LinearLayout>
 
     <FrameLayout

@@ -6,6 +6,8 @@
          network security config forbids cleartext, so the token cannot leave
          for any other host. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Re-arm the midnight widget refresh after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".HabitCommitApp"
@@ -39,6 +41,25 @@
         <receiver
             android:name=".widget.WidgetRefreshReceiver"
             android:exported="false" />
+
+        <!-- Repaint widgets when the system or per-app language changes. -->
+        <receiver
+            android:name=".widget.LocaleChangeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Alarms and the widget date do not survive a reboot. -->
+        <receiver
+            android:name=".widget.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <!-- WorkManager is only used for GitHub sync, so keep its startup
              initializer out of ordinary app and widget starts. Sync initialises

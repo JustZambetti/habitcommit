@@ -1,6 +1,7 @@
 package dev.habitcommit.sync
 
 import java.time.LocalDate
+import java.util.Locale
 
 /**
  * Where the journal lives inside a GitHub repository.
@@ -19,7 +20,7 @@ data class GithubTarget(
     val repoFullName: String get() = "$owner/$repo"
 
     fun journalPath(date: LocalDate, deviceId: String): String {
-        val month = "%04d-%02d".format(date.year, date.monthValue)
+        val month = String.format(Locale.ROOT, "%04d-%02d", date.year, date.monthValue)
         return "$journalDir/$month/$deviceId.jsonl"
     }
 
@@ -40,12 +41,12 @@ data class GithubTarget(
                 val cleanBranch = branch.trim().ifEmpty { DEFAULT_BRANCH }
                 val cleanDir = journalDir.trim().trim('/').ifEmpty { DEFAULT_JOURNAL_DIR }
 
-                require(ownerPattern.matches(cleanOwner)) { "owner GitHub non valido" }
+                require(ownerPattern.matches(cleanOwner)) { "invalid GitHub owner" }
                 require(repoPattern.matches(cleanRepo) && cleanRepo != "." && cleanRepo != "..") {
-                    "nome repo non valido"
+                    "invalid repository name"
                 }
-                require(validBranch(cleanBranch)) { "branch non valido" }
-                require(validPath(cleanDir)) { "cartella journal non valida" }
+                require(validBranch(cleanBranch)) { "invalid branch" }
+                require(validPath(cleanDir)) { "invalid journal folder" }
                 GithubTarget(cleanOwner, cleanRepo, cleanBranch, cleanDir)
             }
         }
